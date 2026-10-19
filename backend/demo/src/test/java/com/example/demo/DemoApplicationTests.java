@@ -1,13 +1,74 @@
 package com.example.demo;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 class DemoApplicationTests {
+
+	@Autowired
+	private MockMvc mockMvc;
 
 	@Test
 	void contextLoads() {
 	}
 
+	@Test
+	void roleSwitcherReturnsSampleUsers() throws Exception {
+		mockMvc.perform(get("/api/users").param("role", "STUDENT"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].role").value("STUDENT"));
+	}
+
+	@Test
+	void studentSeesOnlyEnrolledCourses() throws Exception {
+		mockMvc.perform(get("/api/courses").header("X-User-Id", "4"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].code").value("SE331"));
+	}
+
+	@Test
+	void administratorCanCreateCourseWithUniqueCode() throws Exception {
+		mockMvc.perform(post("/api/courses")
+						.header("X-User-Id", "1")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"title":"Databases","code":"DB201","description":"SQL and data modeling","term":"Fall 2026"}
+								"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value("DB201"));
+	}
+
+	@Test
+	void duplicateCourseCodeIsRejected() throws Exception {
+		mockMvc.perform(post("/api/courses")
+						.header("X-User-Id", "1")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"title":"Software Engineering Copy","code":"SE331","term":"Fall 2026"}
+								"""))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void studentCannotCreateCourse() throws Exception {
+		mockMvc.perform(post("/api/courses")
+						.header("X-User-Id", "4")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"title":"Hacked Course","code":"HX001","term":"Fall 2026"}
+								"""))
+				.andExpect(status().isForbidden());
+	}
 }
