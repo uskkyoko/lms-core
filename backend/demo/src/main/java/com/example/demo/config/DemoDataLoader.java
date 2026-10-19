@@ -28,10 +28,7 @@ public class DemoDataLoader implements CommandLineRunner {
 	public void run(String... args) {
 		users.save(new User("Olha Kovalenko", "olha.kovalenko@auk.edu.ua", Role.ADMINISTRATOR));
 		User instructor = users.save(new User("Andrii Shevchenko", "andrii.shevchenko@auk.edu.ua", Role.INSTRUCTOR));
-		users.save(new User("Maria Bondar", "maria.bondar@auk.edu.ua", Role.INSTRUCTOR));
-		User uliana = users.save(new User("Uliana Sova", "uliana.sova@auk.edu.ua", Role.STUDENT));
-		User ksenia = users.save(new User("Ksenia Maranda", "ksenia.maranda@auk.edu.ua", Role.STUDENT));
-		User yelyzaveta = users.save(new User("Yelyzaveta Maranda", "yelyzaveta.maranda@auk.edu.ua", Role.STUDENT));
+		User student = users.save(new User("Ksenia Maranda", "ksenia.maranda@auk.edu.ua", Role.STUDENT));
 
 		Course se331 = new Course(
 				"Software Engineering",
@@ -40,10 +37,7 @@ public class DemoDataLoader implements CommandLineRunner {
 				"Fall 2026");
 		se331.getInstructors().add(instructor);
 		courses.save(se331);
-
-		enrollments.save(new Enrollment(se331, uliana));
-		enrollments.save(new Enrollment(se331, ksenia));
-		enrollments.save(new Enrollment(se331, yelyzaveta));
+		enrollments.save(new Enrollment(se331, student));
 
 		Course ai101 = new Course(
 				"Introduction to Artificial Intelligence",
@@ -51,6 +45,6 @@ public class DemoDataLoader implements CommandLineRunner {
 				"Foundations of AI for undergraduate students. Not yet assigned to an instructor.",
 				"Fall 2026");
 		courses.save(ai101);
-		enrollments.save(new Enrollment(ai101, ksenia));
+		enrollments.save(new Enrollment(ai101, student));
 	}
 }
