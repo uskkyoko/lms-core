@@ -1,1 +1,11 @@
 *.env
+/boostdata
+node_modules/
+dist/
+target/
+data/
+.tools/
+tmp/
+playwright-report/
+test-results/
+*.log
