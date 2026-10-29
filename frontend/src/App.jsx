@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createCourse, enrollStudent, fetchCourses, fetchUsers } from "./api.js";
+import Gradebook from "./Gradebook.jsx";
+import QuizList from "./QuizList.jsx";
 
 const ROLES = [
   { value: "STUDENT", label: "Student" },
@@ -14,6 +16,7 @@ export default function App() {
   const [activeUserId, setActiveUserId] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
   const [courses, setCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [section, setSection] = useState("dashboard");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [form, setForm] = useState({ title: "", code: "", description: "", term: "Fall 2026" });
@@ -59,6 +62,7 @@ export default function App() {
     const next = users.find((user) => user.role === role);
     if (next) {
       setActiveUserId(String(next.id));
+      setSection("dashboard");
       setNotice(`Switched to ${role.toLowerCase()} view.`);
     }
   }
@@ -96,6 +100,7 @@ export default function App() {
   }
 
   const isAdmin = activeUser?.role === "ADMINISTRATOR";
+  const canGrade = activeUser?.role === "INSTRUCTOR" || isAdmin;
 
   return (
     <div className="app">
@@ -108,11 +113,33 @@ export default function App() {
           </div>
         </div>
         <nav>
-          <button className="nav-item active" type="button">
+          <button
+            className={`nav-item ${section === "dashboard" ? "active" : ""}`}
+            type="button"
+            onClick={() => setSection("dashboard")}
+          >
             Dashboard
           </button>
-          <button className="nav-item" type="button">
+          <button
+            className={`nav-item ${section === "courses" ? "active" : ""}`}
+            type="button"
+            onClick={() => setSection("courses")}
+          >
             My Courses
+          </button>
+          <button
+            className={`nav-item ${section === "quizzes" ? "active" : ""}`}
+            type="button"
+            onClick={() => setSection("quizzes")}
+          >
+            Quizzes
+          </button>
+          <button
+            className={`nav-item ${section === "grades" ? "active" : ""}`}
+            type="button"
+            onClick={() => setSection("grades")}
+          >
+            {canGrade ? "Gradebook" : "Grades"}
           </button>
         </nav>
       </aside>
@@ -163,6 +190,43 @@ export default function App() {
         {error ? <div className="banner error">{error}</div> : null}
         {notice ? <div className="banner success">{notice}</div> : null}
 
+        {selectedCourse && section !== "dashboard" ? (
+          <p className="course-chip">
+            {selectedCourse.code} – {selectedCourse.title}
+          </p>
+        ) : null}
+
+        {section === "quizzes" && selectedCourse && activeUser ? (
+          <QuizList
+            activeUser={activeUser}
+            course={selectedCourse}
+            onNotice={(message) => {
+              setNotice(message);
+              setError("");
+            }}
+            onError={(message) => {
+              setError(message);
+              setNotice("");
+            }}
+          />
+        ) : null}
+
+        {section === "grades" && selectedCourse && activeUser ? (
+          <Gradebook
+            activeUser={activeUser}
+            course={selectedCourse}
+            onNotice={(message) => {
+              setNotice(message);
+              setError("");
+            }}
+            onError={(message) => {
+              setError(message);
+              setNotice("");
+            }}
+          />
+        ) : null}
+
+        {section === "dashboard" || section === "courses" ? (
         <section className="grid">
           <div>
             <h2>Available courses</h2>
@@ -180,7 +244,10 @@ export default function App() {
                     key={course.id}
                     type="button"
                     className={`card ${selectedCourse?.id === course.id ? "selected" : ""}`}
-                    onClick={() => setSelectedCourseId(course.id)}
+                    onClick={() => {
+                      setSelectedCourseId(course.id);
+                      setSection("courses");
+                    }}
                   >
                     <span className="code">{course.code}</span>
                     <strong>{course.title}</strong>
@@ -224,6 +291,14 @@ export default function App() {
                     </dd>
                   </div>
                 </dl>
+                  <div className="actions">
+                    <button className="primary" type="button" onClick={() => setSection("quizzes")}>
+                      Quizzes
+                    </button>
+                    <button type="button" onClick={() => setSection("grades")}>
+                      {canGrade ? "Gradebook" : "Grades"}
+                    </button>
+                  </div>
               </article>
             ) : (
               <article className="panel">
@@ -299,6 +374,7 @@ export default function App() {
             ) : null}
           </div>
         </section>
+        ) : null}
       </main>
     </div>
   );

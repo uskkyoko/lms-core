@@ -204,6 +204,116 @@ dd {
   cursor: pointer;
 }
 
+button {
+  border: 1px solid #c9d6e2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.actions,
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.inline-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.course-chip {
+  display: inline-block;
+  background: #e7eef8;
+  color: #16324f;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px;
+  font-size: 14px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #d7e2ec;
+  text-align: left;
+  padding: 10px 8px;
+  vertical-align: top;
+}
+
+.question {
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.option {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.option.correct {
+  color: #146c43;
+  font-weight: 600;
+}
+
+.option.selected {
+  color: #2f6fed;
+}
+
+.timer {
+  font-weight: 700;
+  background: #16324f;
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.timer.warn {
+  background: #9b1c1c;
+}
+
+.essay {
+  background: #f6f9fc;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.linkish {
+  display: block;
+  margin-top: 6px;
+  border: 0;
+  background: none;
+  color: #2f6fed;
+  padding: 0;
+}
+
+.nested {
+  background: #f6f9fc;
+}
+
 @media (max-width: 960px) {
   .app,
   .grid,
