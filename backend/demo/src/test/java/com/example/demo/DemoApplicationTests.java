@@ -11,9 +11,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 class DemoApplicationTests {
 
 	@Autowired
@@ -44,9 +46,9 @@ class DemoApplicationTests {
 						.header("X-User-Id", "1")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"title":"Databases","code":"DB201","description":"SQL and data modeling","term":"Fall 2026"}
+								{"title":"Databases","code":"DB201","description":"SQL and data modeling","term":"Fall 2026","instructorIds":[2]}
 								"""))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.code").value("DB201"));
 	}
 
@@ -56,9 +58,9 @@ class DemoApplicationTests {
 						.header("X-User-Id", "1")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"title":"Software Engineering Copy","code":"SE331","term":"Fall 2026"}
+								{"title":"Software Engineering Copy","code":"SE331","description":"Duplicate","term":"Fall 2026","instructorIds":[2]}
 								"""))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isConflict());
 	}
 
 	@Test
@@ -67,7 +69,7 @@ class DemoApplicationTests {
 						.header("X-User-Id", "4")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"title":"Hacked Course","code":"HX001","term":"Fall 2026"}
+								{"title":"Hacked Course","code":"HX001","description":"Forbidden","term":"Fall 2026","instructorIds":[2]}
 								"""))
 				.andExpect(status().isForbidden());
 	}

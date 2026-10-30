@@ -463,6 +463,7 @@ public class QuizService {
 	}
 
 	private void assertOwnInProgress(User actor, QuizAttempt attempt) {
+		lmsService.requireEnrolledStudent(actor, attempt.getQuiz().getModule().getCourse());
 		if (actor.getRole() != Role.STUDENT || !attempt.getStudent().getId().equals(actor.getId())) {
 			throw new ForbiddenException("Only the student who started this attempt can change answers.");
 		}
