@@ -3,6 +3,7 @@ package com.example.demo.config;
 import java.time.LocalDateTime;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.example.demo.domain.Course;
@@ -30,6 +31,7 @@ import com.example.demo.repo.StudentAnswerRepository;
 import com.example.demo.repo.UserRepository;
 
 @Component
+@Order(1)
 public class DemoDataLoader implements CommandLineRunner {
 
 	private final UserRepository users;

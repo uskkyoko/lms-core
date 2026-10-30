@@ -24,7 +24,7 @@ class CourseReportApiTests {
             .andExpect(jsonPath("$.completion[2].kind").value("QUIZ")).andExpect(jsonPath("$.completion[2].completed").value(2))
             .andExpect(jsonPath("$.completion[2].total").value(3)).andExpect(jsonPath("$.earnedPoints").value(20))
             .andExpect(jsonPath("$.possiblePoints").value(45)).andExpect(jsonPath("$.currentGradePercentage").value(44.4))
-            .andExpect(jsonPath("$.pendingGrades").value(1)).andExpect(jsonPath("$.unavailableSources",contains("MATERIAL","ASSIGNMENT")));
+            .andExpect(jsonPath("$.pendingGrades").value(1)).andExpect(jsonPath("$.unavailableSources",hasSize(0)));
         mvc.perform(get("/api/courses/1/grades").header("X-User-Id",4)).andExpect(jsonPath("$.student.percentage").value(44.4));
     }
     @Test void tc31CalculatesRatesAveragesAndStudentsWithMissingWork() throws Exception {

@@ -9,7 +9,10 @@ React frontend and Spring Boot REST API for Team 1's university LMS. MySQL is th
 - Instructor assignment, student enrollment, duplicate prevention and removal. Removed enrollments retain their original date and row; course and quiz/grade access are revoked immediately (FR-7/10, NFR-2).
 - Shared `User` inheritance (`Student`, `Instructor`, `Administrator`), `Course`, `Enrollment` and ordered `Module` entities.
 - Existing quiz and gradebook workflows, including pending essays and grade history.
-- Student Progress and Instructor Analytics using actual quizzes, attempts and authoritative grades. Grade changes are reflected when reports refresh. Material and assignment/submission reporting awaits the owning modules; the interface explicitly shows those categories as unavailable.
+- Student Progress and Instructor Analytics using quizzes, assignment submissions, and authoritative grades from the shared `Grade` row. Grade changes are reflected when reports refresh.
+- Course content: modules, text pages, video embeds or files, and TXT/DOCX/PDF materials that can be published or hidden.
+- Assignments on a module, with file submission and replacement until the server-side deadline, then instructor scoring and feedback on the shared `Grade` record.
+- Announcements, plus discussion posts and replies with author edit rights and instructor or administrator delete rights.
 
 See [Uliana's implementation and integration guide](docs/uliana-phase-3-implementation.md) for API contracts, test mapping, deletion policy and remaining dependencies. The [alignment review](docs/phase-3-alignment-review.md) records the state before these implementation changes.
 

@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -29,6 +31,16 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(ForbiddenException.class)
 	public ResponseEntity<Map<String, String>> forbidden(ForbiddenException ex) {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", ex.getMessage()));
+	}
+
+	@ExceptionHandler(MissingServletRequestPartException.class)
+	public ResponseEntity<Map<String, String>> missingFile(MissingServletRequestPartException ex) {
+		return ResponseEntity.badRequest().body(Map.of("message", "A file is required."));
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<Map<String, String>> tooLarge(MaxUploadSizeExceededException ex) {
+		return ResponseEntity.badRequest().body(Map.of("message", "The file is too large. The maximum size is 20 MB."));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

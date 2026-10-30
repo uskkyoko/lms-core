@@ -20,11 +20,16 @@ public class LmsService {
     private final ModuleRepository modules;
     private final QuizRepository quizzes;
     private final AssignmentRepository assignments;
+    private final MaterialRepository materials;
+    private final AnnouncementRepository announcements;
+    private final DiscussionPostRepository discussions;
 
     public LmsService(UserRepository users, CourseRepository courses, EnrollmentRepository enrollments,
-                      ModuleRepository modules, QuizRepository quizzes, AssignmentRepository assignments) {
+                      ModuleRepository modules, QuizRepository quizzes, AssignmentRepository assignments,
+                      MaterialRepository materials, AnnouncementRepository announcements, DiscussionPostRepository discussions) {
         this.users = users; this.courses = courses; this.enrollments = enrollments;
         this.modules = modules; this.quizzes = quizzes; this.assignments = assignments;
+        this.materials = materials; this.announcements = announcements; this.discussions = discussions;
     }
     public User requireUser(Long userId) {
         if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Select a sample user first.");
@@ -68,6 +73,10 @@ public class LmsService {
         // Retain learning records and immutable grade history. Archive these courses instead.
         if (quizzes.existsByModuleCourse(course) || assignments.existsByModuleCourse(course))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This course contains assessments. Archive it to preserve learning records and grade history.");
+        materials.deleteByModuleCourse(course);
+        discussions.deleteByCourseAndParentIsNotNull(course);
+        discussions.deleteByCourse(course);
+        announcements.deleteByCourse(course);
         enrollments.deleteByCourse(course);
         modules.deleteByCourse(course);
         courses.delete(course);

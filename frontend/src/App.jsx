@@ -4,6 +4,7 @@ import { CourseEditor, CoursePeople } from "./AdminCourse.jsx";
 import CourseReport from "./CourseReport.jsx";
 import Gradebook from "./Gradebook.jsx";
 import QuizList from "./QuizList.jsx";
+import CourseWorkspace from "./CourseWorkspace.jsx";
 
 const ROLES = [
   { value: "STUDENT", label: "Student" },
@@ -89,7 +90,7 @@ export default function App() {
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark">AUK</span><div><strong>University LMS</strong><p>Teaching &amp; learning core</p></div></div>
       <nav aria-label="Workspace">
-        {[['dashboard', 'Dashboard'], ['courses', isAdmin ? 'Course management' : 'My Courses'], ['quizzes', 'Quizzes'], ['grades', canGrade ? 'Gradebook' : 'Grades'],
+        {[['dashboard', 'Dashboard'], ['courses', isAdmin ? 'Course management' : 'My Courses'], ['content', 'Content'], ['quizzes', 'Quizzes'], ['grades', canGrade ? 'Gradebook' : 'Grades'],
           ...(activeUser?.role === 'STUDENT' ? [['progress','Progress']] : []), ...(activeUser?.role === 'INSTRUCTOR' ? [['analytics','Analytics']] : [])]
           .map(([value,label]) => <button className={`nav-item ${section === value ? 'active' : ''}`} type="button" disabled={busy || loading} key={value} onClick={() => { setSection(value); setEditor(null); }}>{label}</button>)}
       </nav>
@@ -117,6 +118,7 @@ export default function App() {
           {isAdmin && <button className="primary" disabled={busy} onClick={() => { setEditor({type:'create'}); setSection('courses'); }}>Create course</button>}
         </div>
         {!courses.length && <p className="empty">No courses for this user yet.</p>}
+        {selectedCourse && section === 'content' && <CourseWorkspace key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && section === 'quizzes' && <QuizList key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && section === 'grades' && <Gradebook key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && ['progress','analytics'].includes(section) && <CourseReport key={componentKey} activeUser={activeUser} course={selectedCourse} />}
@@ -131,7 +133,7 @@ export default function App() {
               <article className="panel"><h2>{selectedCourse.code} — {selectedCourse.title}</h2><p>{selectedCourse.description}</p>
                 <dl><div><dt>Term</dt><dd>{selectedCourse.term}</dd></div><div><dt>Status</dt><dd>{selectedCourse.status}</dd></div><div><dt>Instructors</dt><dd>{selectedCourse.instructors.map(user => user.fullName).join(', ') || 'Not assigned'}</dd></div>
                   {canGrade && <div><dt>Enrolled students</dt><dd>{selectedCourse.students.map(user => user.fullName).join(', ') || 'None'}</dd></div>}</dl>
-                <div className="actions"><button className="primary" disabled={busy} onClick={() => setSection('quizzes')}>Quizzes</button><button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? 'Gradebook' : 'Grades'}</button>
+                <div className="actions"><button className="primary" disabled={busy} onClick={() => setSection('content')}>Content</button><button disabled={busy} onClick={() => setSection('quizzes')}>Quizzes</button><button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? 'Gradebook' : 'Grades'}</button>
                   {!isAdmin && <button disabled={busy} onClick={() => setSection(activeUser.role === 'STUDENT' ? 'progress' : 'analytics')}>{activeUser.role === 'STUDENT' ? 'View progress' : 'View analytics'}</button>}
                   {isAdmin && <><button disabled={busy} onClick={() => setEditor({type:'edit',course:selectedCourse})}>Edit course</button><button disabled={busy || selectedCourse.status === 'ARCHIVED'} onClick={() => act('archive')}>Archive course</button><button className="danger" disabled={busy} onClick={() => act('delete')}>Delete course</button></>}
                 </div>

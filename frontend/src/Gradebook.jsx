@@ -62,9 +62,9 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
               </thead>
               <tbody>
                 {cells.map((cell) => {
-                  const item = myGrades.items.find((entry) => entry.id === cell.quizId);
+                  const item = myGrades.items.find((entry) => entry.type === (cell.type || "QUIZ") && entry.id === (cell.assignmentId || cell.quizId));
                   return (
-                    <tr key={cell.quizId}>
+                    <tr key={`${cell.type || "QUIZ"}-${cell.assignmentId || cell.quizId}`}>
                       <td>{item?.title}</td>
                       <td>{formatStatus(cell.status)}</td>
                       <td>
@@ -95,7 +95,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
   return (
     <article className="panel">
       <h2>Gradebook</h2>
-      <p className="muted">All enrolled students, all quiz items, totals, percentages, and grade history.</p>
+      <p className="muted">All enrolled students, quiz and assignment items, totals, percentages, and grade history.</p>
       {!gradebook ? (
         <p className="muted">Loading gradebook…</p>
       ) : (
@@ -106,7 +106,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
                 <tr>
                   <th>Student</th>
                   {gradebook.items.map((item) => (
-                    <th key={item.id}>
+                    <th key={`${item.type}-${item.id}`}>
                       {item.title}
                       <div className="muted">{item.maxPoints} pts</div>
                     </th>
@@ -120,7 +120,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
                   <tr key={row.id}>
                     <td>{row.fullName}</td>
                     {row.cells.map((cell) => (
-                      <td key={cell.quizId}>
+                      <td key={`${cell.type || "QUIZ"}-${cell.assignmentId || cell.quizId}`}>
                         {cell.status === "PENDING_GRADING"
                           ? "Pending grading"
                           : cell.status === "GRADED"
@@ -134,7 +134,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
                               setEdit({
                                 gradeId: cell.gradeId,
                                 student: row.fullName,
-                                title: gradebook.items.find((item) => item.id === cell.quizId)?.title,
+                                title: gradebook.items.find((item) => item.type === (cell.type || "QUIZ") && item.id === (cell.assignmentId || cell.quizId))?.title,
                                 points: cell.points,
                                 maxPoints: cell.maxPoints,
                                 feedback: cell.feedback || "",
