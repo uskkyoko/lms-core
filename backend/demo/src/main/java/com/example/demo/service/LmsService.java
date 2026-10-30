@@ -88,6 +88,46 @@ public class LmsService {
 		return toDto(course);
 	}
 
+	public Course requireCourse(Long courseId) {
+		return courses.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found."));
+	}
+
+	public void requireVisibleCourse(User actor, Course course) {
+		boolean allowed = switch (actor.getRole()) {
+			case ADMINISTRATOR -> true;
+			case INSTRUCTOR -> isAssignedInstructor(course, actor);
+			case STUDENT -> enrollments.existsByCourseAndStudent(course, actor);
+		};
+		if (!allowed) {
+			throw new ForbiddenException("You do not have access to this course.");
+		}
+	}
+
+	public void requireInstructorOrAdmin(User actor, Course course) {
+		if (actor.getRole() == Role.ADMINISTRATOR) {
+			return;
+		}
+		if (actor.getRole() != Role.INSTRUCTOR || !isAssignedInstructor(course, actor)) {
+			throw new ForbiddenException("Only assigned instructors or administrators can do this.");
+		}
+	}
+
+	public void requireEnrolledStudent(User actor, Course course) {
+		if (actor.getRole() != Role.STUDENT || !enrollments.existsByCourseAndStudent(course, actor)) {
+			throw new ForbiddenException("Only enrolled students can take this quiz.");
+		}
+	}
+
+	public List<User> enrolledStudents(Course course) {
+		return enrollments.findByCourseOrderByStudentFullNameAsc(course).stream()
+				.map(Enrollment::getStudent)
+				.toList();
+	}
+
+	private boolean isAssignedInstructor(Course course, User actor) {
+		return course.getInstructors().stream().anyMatch(user -> user.getId().equals(actor.getId()));
+	}
+
 	private CourseDto toDto(Course course) {
 		List<UserDto> students = enrollments.findByCourseOrderByStudentFullNameAsc(course).stream()
 				.map(enrollment -> UserDto.from(enrollment.getStudent()))
