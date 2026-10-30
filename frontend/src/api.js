@@ -3,11 +3,24 @@ const headers = (userId, extra = {}) => ({
   ...extra,
 });
 
+function apiError(data, response) {
+  return data.message || data.detail || data.error || data.title
+    || `The request failed (${response.status}). Check that the API is running.`;
+}
+
 async function readJson(response) {
   if (response.status === 204) return null;
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
-    throw new Error(data.message || "Request failed.");
+    throw new Error(apiError(data, response));
   }
   return data;
 }
@@ -235,17 +248,11 @@ export function deleteDiscussion(userId, postId) {
     method: "DELETE",
     headers: headers(userId),
   }).then(async (response) => {
-    if (response.status === 204 || response.ok && response.status !== 200) {
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || "Request failed.");
-      }
+    if (response.ok || response.status === 204) {
       return;
     }
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || "Request failed.");
-    }
+    const data = await response.json().catch(() => ({}));
+    throw new Error(apiError(data, response));
   });
 }
 

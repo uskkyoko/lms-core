@@ -263,25 +263,33 @@ class ContentAndCommunicationTests {
 						.content("{\"title\":\"Nope\",\"body\":\"Students cannot announce.\"}"))
 				.andExpect(status().isForbidden());
 
-		MvcResult post = mockMvc.perform(post("/api/courses/{courseId}/discussions", SE331)
+		mockMvc.perform(post("/api/courses/{courseId}/discussions", SE331)
 						.header("X-User-Id", STUDENT)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"title\":\"Question about lab\",\"body\":\"Students cannot start threads.\"}"))
+				.andExpect(status().isForbidden());
+
+		MvcResult post = mockMvc.perform(post("/api/courses/{courseId}/discussions", SE331)
+						.header("X-User-Id", INSTRUCTOR)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"title\":\"Question about lab\",\"body\":\"Is the PDF required?\"}"))
 				.andExpect(status().isOk())
 				.andReturn();
 		long postId = idOf(post);
 
-		mockMvc.perform(post("/api/discussions/{id}/replies", postId)
-						.header("X-User-Id", INSTRUCTOR)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"body\":\"Yes, PDF is preferred.\"}"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.body").value("Yes, PDF is preferred."));
-
-		mockMvc.perform(put("/api/discussions/{id}", postId)
+		MvcResult reply = mockMvc.perform(post("/api/discussions/{id}/replies", postId)
 						.header("X-User-Id", STUDENT)
 						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"title\":\"Updated question\",\"body\":\"Is DOCX also accepted?\"}"))
+						.content("{\"body\":\"Can we also submit DOCX?\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.body").value("Can we also submit DOCX?"))
+				.andReturn();
+		long replyId = idOf(reply);
+
+		mockMvc.perform(put("/api/discussions/{id}", replyId)
+						.header("X-User-Id", STUDENT)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"body\":\"Is DOCX also accepted?\"}"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.body").value("Is DOCX also accepted?"));
 
