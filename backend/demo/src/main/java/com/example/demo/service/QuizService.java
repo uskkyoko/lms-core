@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.domain.Assignment;
 import com.example.demo.domain.Course;
 import com.example.demo.domain.Grade;
 import com.example.demo.domain.GradeChangeLog;
@@ -22,13 +23,16 @@ import com.example.demo.domain.Quiz;
 import com.example.demo.domain.QuizAttempt;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.StudentAnswer;
+import com.example.demo.domain.Submission;
 import com.example.demo.domain.User;
+import com.example.demo.repo.AssignmentRepository;
 import com.example.demo.repo.GradeChangeLogRepository;
 import com.example.demo.repo.GradeRepository;
 import com.example.demo.repo.ModuleRepository;
 import com.example.demo.repo.QuizAttemptRepository;
 import com.example.demo.repo.QuizRepository;
 import com.example.demo.repo.StudentAnswerRepository;
+import com.example.demo.repo.SubmissionRepository;
 import com.example.demo.web.ForbiddenException;
 import com.example.demo.web.dto.quiz.ChangeGradeRequest;
 import com.example.demo.web.dto.quiz.CreateQuizRequest;
@@ -48,6 +52,8 @@ public class QuizService {
 	private final GradeRepository grades;
 	private final GradeChangeLogRepository logs;
 	private final ModuleRepository modules;
+	private final AssignmentRepository assignments;
+	private final SubmissionRepository submissions;
 
 	public QuizService(
 			LmsService lmsService,
@@ -56,7 +62,9 @@ public class QuizService {
 			StudentAnswerRepository answers,
 			GradeRepository grades,
 			GradeChangeLogRepository logs,
-			ModuleRepository modules) {
+			ModuleRepository modules,
+			AssignmentRepository assignments,
+			SubmissionRepository submissions) {
 		this.lmsService = lmsService;
 		this.quizzes = quizzes;
 		this.attempts = attempts;
@@ -64,6 +72,8 @@ public class QuizService {
 		this.grades = grades;
 		this.logs = logs;
 		this.modules = modules;
+		this.assignments = assignments;
+		this.submissions = submissions;
 	}
 
 	@Transactional
@@ -288,16 +298,24 @@ public class QuizService {
 
 	private Map<String, Object> buildGradebook(Course course) {
 		List<Quiz> courseQuizzes = quizzes.findByModuleCourseOrderByTitleAsc(course);
-		List<Map<String, Object>> items = courseQuizzes.stream()
-				.map(quiz -> {
-					Map<String, Object> item = new LinkedHashMap<>();
-					item.put("id", quiz.getId());
-					item.put("title", quiz.getTitle());
-					item.put("maxPoints", quiz.totalPoints());
-					item.put("type", "QUIZ");
-					return item;
-				})
-				.toList();
+		List<Assignment> courseAssignments = assignments.findByModuleCourseOrderByDeadlineAscIdAsc(course);
+		List<Map<String, Object>> items = new ArrayList<>();
+		for (Quiz quiz : courseQuizzes) {
+			Map<String, Object> item = new LinkedHashMap<>();
+			item.put("id", quiz.getId());
+			item.put("title", quiz.getTitle());
+			item.put("maxPoints", quiz.totalPoints());
+			item.put("type", "QUIZ");
+			items.add(item);
+		}
+		for (Assignment assignment : courseAssignments) {
+			Map<String, Object> item = new LinkedHashMap<>();
+			item.put("id", assignment.getId());
+			item.put("title", assignment.getTitle());
+			item.put("maxPoints", assignment.getMaxPoints());
+			item.put("type", "ASSIGNMENT");
+			items.add(item);
+		}
 		List<Map<String, Object>> students = new ArrayList<>();
 		for (User student : lmsService.enrolledStudents(course)) {
 			List<Map<String, Object>> cells = new ArrayList<>();
@@ -309,11 +327,30 @@ public class QuizService {
 				Grade grade = attempt == null ? null : grades.findByAttempt(attempt).orElse(null);
 				String status = cellStatus(attempt);
 				Map<String, Object> cell = new LinkedHashMap<>();
+				cell.put("type", "QUIZ");
 				cell.put("quizId", quiz.getId());
 				cell.put("gradeId", grade == null ? null : grade.getId());
 				cell.put("status", status);
 				cell.put("points", grade == null ? null : grade.getPoints());
 				cell.put("maxPoints", quiz.totalPoints());
+				cell.put("feedback", grade == null ? "" : grade.getFeedback());
+				if (grade != null) {
+					total += grade.getPoints();
+				}
+				cells.add(cell);
+			}
+			for (Assignment assignment : courseAssignments) {
+				max += assignment.getMaxPoints();
+				Submission submission = submissions.findByAssignmentAndStudent(assignment, student).orElse(null);
+				Grade grade = grades.findByStudentAndAssignment(student, assignment).orElse(null);
+				String status = grade != null ? "GRADED" : submission != null ? "PENDING_GRADING" : "MISSING";
+				Map<String, Object> cell = new LinkedHashMap<>();
+				cell.put("type", "ASSIGNMENT");
+				cell.put("assignmentId", assignment.getId());
+				cell.put("gradeId", grade == null ? null : grade.getId());
+				cell.put("status", status);
+				cell.put("points", grade == null ? null : grade.getPoints());
+				cell.put("maxPoints", assignment.getMaxPoints());
 				cell.put("feedback", grade == null ? "" : grade.getFeedback());
 				if (grade != null) {
 					total += grade.getPoints();

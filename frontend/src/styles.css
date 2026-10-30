@@ -353,3 +353,17 @@ select, input, textarea { min-width: 0; max-width: 100%; }
   .sidebar nav { display: flex; flex-wrap: wrap; }
   .nav-item { width: auto; margin: 0; }
 }
+
+.tabs { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+.tab { border: 1px solid #c9d6e2; background: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.tab.active { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+.stack { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 12px; }
+.item { display: grid; gap: 8px; border-top: 1px solid #e6eef5; padding-top: 12px; }
+.nested { margin-top: 16px; display: grid; gap: 10px; }
+.inline { display: flex; align-items: center; gap: 8px; }
+.grade-form { display: grid; grid-template-columns: 80px 1fr auto; gap: 8px; }
+.workspace h3 { margin: 0; }
+.video-frame { width: 100%; max-width: 640px; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; background: #0f1720; }
+@media (max-width: 960px) {
+  .grade-form { grid-template-columns: 1fr; }
+}

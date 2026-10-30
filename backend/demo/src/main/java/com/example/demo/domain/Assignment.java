@@ -31,6 +31,9 @@ public class Assignment {
 	@Column(nullable = false)
 	private LocalDateTime deadline;
 
+	@Column(nullable = false)
+	private boolean published = true;
+
 	@ManyToOne
 	@JoinColumn(name = "module_id")
 	private Module module;
@@ -72,6 +75,14 @@ public class Assignment {
 
 	public void setDeadline(LocalDateTime deadline) {
 		this.deadline = deadline;
+	}
+
+	public boolean isPublished() {
+		return published;
+	}
+
+	public void setPublished(boolean published) {
+		this.published = published;
 	}
 
 	public Module getModule() {
