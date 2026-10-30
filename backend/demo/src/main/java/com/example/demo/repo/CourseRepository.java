@@ -11,6 +11,7 @@ import com.example.demo.domain.User;
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
 	boolean existsByCodeIgnoreCase(String code);
+	boolean existsByCodeIgnoreCaseAndIdNot(String code, Long id);
 
 	Optional<Course> findByCodeIgnoreCase(String code);
 

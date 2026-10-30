@@ -10,4 +10,5 @@ import com.example.demo.domain.Module;
 public interface ModuleRepository extends JpaRepository<Module, Long> {
 
 	List<Module> findByCourseOrderByOrderNumberAsc(Course course);
+	void deleteByCourse(Course course);
 }

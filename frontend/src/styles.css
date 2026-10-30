@@ -314,6 +314,29 @@ td {
   background: #f6f9fc;
 }
 
+.form-fields { display: grid; gap: 14px; margin-bottom: 16px; }
+fieldset { border: 1px solid #d7e2ec; border-radius: 8px; padding: 14px; margin: 12px 0; min-width: 0; }
+legend { font-weight: 600; }
+button:disabled { opacity: .55; cursor: default; }
+.danger { color: #9b1c1c; }
+.roster { list-style: none; padding: 0; }
+.roster li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #d7e2ec; }
+.banner.pending { background: #fff3cc; color: #695013; }
+.progress-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.progress-grid article { padding: 14px; border-radius: 8px; background: #f6f9fc; }
+.progress-grid h3 { font-size: 16px; }
+progress { display: block; width: 100%; margin: 12px 0; }
+td small { display: block; color: #6b7c8d; margin-top: 4px; }
+main { min-width: 0; }
+select, input, textarea { min-width: 0; max-width: 100%; }
+.card, dd, td { overflow-wrap: anywhere; }
+@media (max-width: 540px) {
+  main { padding: 20px 16px; }
+  .topbar { flex-direction: column; }
+  .role-switcher { width: 100%; }
+  .progress-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 960px) {
   .app,
   .grid,
@@ -323,6 +346,10 @@ td {
   }
 
   .sidebar {
-    display: none;
+    display: block;
+    padding: 12px 16px;
   }
+  .sidebar .brand { margin-bottom: 12px; }
+  .sidebar nav { display: flex; flex-wrap: wrap; }
+  .nav-item { width: auto; margin: 0; }
 }

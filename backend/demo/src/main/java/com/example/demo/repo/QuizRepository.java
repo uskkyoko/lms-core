@@ -15,6 +15,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 	List<Quiz> findByModuleId(Long moduleId);
 
 	List<Quiz> findByModuleCourseOrderByTitleAsc(Course course);
+	boolean existsByModuleCourse(Course course);
 
 	@Query("select distinct q from Quiz q left join fetch q.questions where q.id = :id")
 	Optional<Quiz> findWithQuestionsById(@Param("id") Long id);

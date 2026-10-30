@@ -16,6 +16,10 @@ import com.example.demo.domain.QuizAttempt;
 import com.example.demo.domain.Role;
 import com.example.demo.domain.StudentAnswer;
 import com.example.demo.domain.User;
+import com.example.demo.domain.Student;
+import com.example.demo.domain.Instructor;
+import com.example.demo.domain.Administrator;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.repo.CourseRepository;
 import com.example.demo.repo.EnrollmentRepository;
 import com.example.demo.repo.GradeRepository;
@@ -57,12 +61,14 @@ public class DemoDataLoader implements CommandLineRunner {
 	}
 
 	@Override
+	@Transactional
 	public void run(String... args) {
-		users.save(new User("Olha Kovalenko", "olha.kovalenko@auk.edu.ua", Role.ADMINISTRATOR));
-		User instructor = users.save(new User("Andrii Shevchenko", "andrii.shevchenko@auk.edu.ua", Role.INSTRUCTOR));
-		User ksenia = users.save(new User("Ksenia Maranda", "ksenia.maranda@auk.edu.ua", Role.STUDENT));
-		User yelyzaveta = users.save(new User("Yelyzaveta Maranda", "yelyzaveta.maranda@auk.edu.ua", Role.STUDENT));
-		User uliana = users.save(new User("Uliana Sova", "uliana.sova@auk.edu.ua", Role.STUDENT));
+		if (users.count() > 0) return;
+		users.save(new Administrator("Olha Kovalenko", "olha.kovalenko@auk.edu.ua"));
+		User instructor = users.save(new Instructor("Andrii Shevchenko", "andrii.shevchenko@auk.edu.ua"));
+		User ksenia = users.save(new Student("Ksenia Maranda", "ksenia.maranda@auk.edu.ua"));
+		User yelyzaveta = users.save(new Student("Yelyzaveta Maranda", "yelyzaveta.maranda@auk.edu.ua"));
+		User uliana = users.save(new Student("Uliana Sova", "uliana.sova@auk.edu.ua"));
 
 		Course se331 = new Course(
 				"Software Engineering",
@@ -77,8 +83,9 @@ public class DemoDataLoader implements CommandLineRunner {
 		Course ai101 = new Course(
 				"Introduction to Artificial Intelligence",
 				"AI101",
-				"Foundations of AI for undergraduate students. Not yet assigned to an instructor.",
+				"Foundations of AI for undergraduate students.",
 				"Fall 2026");
+		ai101.getInstructors().add(instructor);
 		courses.save(ai101);
 		enrollments.save(new Enrollment(ai101, uliana));
 

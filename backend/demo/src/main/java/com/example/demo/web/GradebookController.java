@@ -2,7 +2,7 @@ package com.example.demo.web;
 
 import java.util.Map;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,7 +18,7 @@ import com.example.demo.web.dto.quiz.ChangeGradeRequest;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173")
+
 public class GradebookController {
 
 	private final LmsService lmsService;
@@ -31,7 +31,7 @@ public class GradebookController {
 
 	@GetMapping("/courses/{courseId}/gradebook")
 	public Map<String, Object> gradebook(
-			@RequestHeader("X-User-Id") Long userId,
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
 			@PathVariable Long courseId) {
 		User actor = lmsService.requireUser(userId);
 		return quizService.gradebook(actor, courseId);
@@ -39,7 +39,7 @@ public class GradebookController {
 
 	@GetMapping("/courses/{courseId}/grades")
 	public Map<String, Object> myGrades(
-			@RequestHeader("X-User-Id") Long userId,
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
 			@PathVariable Long courseId) {
 		User actor = lmsService.requireUser(userId);
 		return quizService.studentGrades(actor, courseId);
@@ -47,7 +47,7 @@ public class GradebookController {
 
 	@PutMapping("/grades/{gradeId}")
 	public Map<String, Object> updateGrade(
-			@RequestHeader("X-User-Id") Long userId,
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
 			@PathVariable Long gradeId,
 			@RequestBody ChangeGradeRequest request) {
 		User actor = lmsService.requireUser(userId);

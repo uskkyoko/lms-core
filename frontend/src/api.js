@@ -4,6 +4,7 @@ const headers = (userId, extra = {}) => ({
 });
 
 async function readJson(response) {
+  if (response.status === 204) return null;
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(data.message || "Request failed.");
@@ -16,9 +17,23 @@ export function fetchUsers(role) {
   return fetch(`/api/users${query}`).then(readJson);
 }
 
-export function fetchCourses(userId) {
-  return fetch("/api/courses", { headers: headers(userId) }).then(readJson);
+export function fetchCourses(userId, signal) {
+  return fetch("/api/courses", { headers: headers(userId), signal }).then(readJson);
 }
+
+function courseRequest(userId, courseId, suffix, method, payload) {
+  return fetch(`/api/courses/${courseId}${suffix}`, {
+    method, headers: headers(userId, { "Content-Type": "application/json" }),
+    body: payload === undefined ? undefined : JSON.stringify(payload),
+  }).then(readJson);
+}
+export const updateCourse = (userId, courseId, payload) => courseRequest(userId, courseId, "", "PUT", payload);
+export const archiveCourse = (userId, courseId) => courseRequest(userId, courseId, "/archive", "PATCH");
+export const deleteCourse = (userId, courseId) => courseRequest(userId, courseId, "", "DELETE");
+export const assignCourseInstructors = (userId, courseId, instructorIds) => courseRequest(userId, courseId, "/instructors", "PUT", { instructorIds });
+export const removeStudent = (userId, courseId, studentId) => courseRequest(userId, courseId, `/enrollments/${studentId}`, "DELETE");
+export const fetchProgress = (userId, courseId) => courseRequest(userId, courseId, "/progress", "GET");
+export const fetchAnalytics = (userId, courseId) => courseRequest(userId, courseId, "/analytics", "GET");
 
 export function createCourse(userId, payload) {
   return fetch("/api/courses", {
