@@ -44,7 +44,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
   if (isStudent) {
     const cells = myGrades?.student?.cells || [];
     return (
-      <article className="panel">
+      <article className="panel" aria-label="My grades">
         <h2>Grades</h2>
         <p className="muted">You can see only your own grades and instructor feedback.</p>
         {!myGrades ? (
@@ -93,7 +93,7 @@ export default function Gradebook({ activeUser, course, onNotice, onError }) {
   }
 
   return (
-    <article className="panel">
+    <article className="panel" aria-label="Gradebook">
       <h2>Gradebook</h2>
       <p className="muted">All enrolled students, quiz and assignment items, totals, percentages, and grade history.</p>
       {!gradebook ? (

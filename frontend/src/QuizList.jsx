@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   createQuiz,
   fetchAttempt,
+  fetchModules,
   fetchQuizAttempts,
   fetchQuizzes,
   gradeEssays,
@@ -25,6 +26,7 @@ function emptyQuestion() {
 
 export default function QuizList({ activeUser, course, onNotice, onError }) {
   const [quizzes, setQuizzes] = useState([]);
+  const [modules, setModules] = useState([]);
   const [view, setView] = useState("list");
   const [attempt, setAttempt] = useState(null);
   const [attempts, setAttempts] = useState([]);
@@ -33,6 +35,7 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
   const [quizForm, setQuizForm] = useState({
     title: "",
     description: "",
+    moduleId: "",
     timeLimitMinutes: 10,
     openAt: toDateTimeLocal(),
     closeAt: toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
@@ -43,7 +46,15 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
   const canManage = activeUser?.role === "INSTRUCTOR" || activeUser?.role === "ADMINISTRATOR";
 
   async function loadQuizzes() {
-    setQuizzes(await fetchQuizzes(activeUser.id, course.id));
+    const [nextQuizzes, nextModules] = await Promise.all([
+      fetchQuizzes(activeUser.id, course.id),
+      fetchModules(activeUser.id, course.id),
+    ]);
+    setQuizzes(nextQuizzes);
+    setModules(nextModules);
+    setQuizForm((current) =>
+      current.moduleId || !nextModules.length ? current : { ...current, moduleId: String(nextModules[0].id) }
+    );
   }
 
   useEffect(() => {
@@ -147,6 +158,7 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
     try {
       await createQuiz(activeUser.id, course.id, {
         ...quizForm,
+        moduleId: quizForm.moduleId ? Number(quizForm.moduleId) : null,
         timeLimitMinutes: Number(quizForm.timeLimitMinutes),
         openAt: toApiDateTime(quizForm.openAt),
         closeAt: toApiDateTime(quizForm.closeAt),
@@ -393,7 +405,7 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
 
   if (view === "create") {
     return (
-      <form className="panel" onSubmit={onCreateQuiz}>
+      <form className="panel stack-form" aria-label="Create quiz" onSubmit={onCreateQuiz}>
         <div className="toolbar">
           <h2>Create quiz</h2>
           <button type="button" onClick={() => setView("list")}>
@@ -415,6 +427,22 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
             onChange={(event) => setQuizForm({ ...quizForm, description: event.target.value })}
           />
         </label>
+        {modules.length ? (
+          <label>
+            Module
+            <select
+              value={quizForm.moduleId}
+              onChange={(event) => setQuizForm({ ...quizForm, moduleId: event.target.value })}
+              required
+            >
+              {modules.map((module) => (
+                <option key={module.id} value={module.id}>
+                  {module.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="inline-fields">
           <label>
             Time limit (minutes)
@@ -528,6 +556,21 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
                   </label>
                 ))
               : null}
+            {question.type === "MULTIPLE_CHOICE" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const questions = [...quizForm.questions];
+                  questions[index] = {
+                    ...question,
+                    options: [...question.options, { text: "", correct: false }],
+                  };
+                  setQuizForm({ ...quizForm, questions });
+                }}
+              >
+                Add option
+              </button>
+            ) : null}
           </section>
         ))}
         <button
@@ -563,7 +606,8 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
       {quizzes.length === 0 ? (
         <div className="empty">No quizzes in this course yet.</div>
       ) : (
-        <table>
+        <div className="table-wrap">
+        <table className="quiz-table">
           <thead>
             <tr>
               <th>Quiz</th>
@@ -585,11 +629,15 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
                 <td>{quiz.questionCount}</td>
                 <td>{quiz.totalPoints}</td>
                 <td>{quiz.timeLimitMinutes} min</td>
-                <td>
+                <td className="nowrap">
                   {formatDate(quiz.openAt)} – {formatDate(quiz.closeAt)}
                 </td>
-                <td>{formatStatus(isStudent ? quiz.studentStatus : quiz.availability)}</td>
-                <td className="actions">
+                <td className="status-cell">
+                  <span className={["CLOSED", "NOT_OPEN"].includes(isStudent ? quiz.studentStatus : quiz.availability) ? "muted" : undefined}>
+                    {formatStatus(isStudent ? quiz.studentStatus : quiz.availability)}
+                  </span>
+                </td>
+                <td className="quiz-actions">
                   {isStudent && quiz.studentStatus === "AVAILABLE" ? (
                     <button className="primary" type="button" onClick={() => onStart(quiz)}>
                       Start quiz
@@ -605,6 +653,12 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
                       {quiz.studentStatus === "GRADED" ? "Review" : "View result"}
                     </button>
                   ) : null}
+                  {isStudent && !quiz.attemptId && quiz.studentStatus === "CLOSED" ? (
+                    <span className="muted">Cannot start</span>
+                  ) : null}
+                  {isStudent && !quiz.attemptId && quiz.studentStatus === "NOT_OPEN" ? (
+                    <span className="muted">Not open yet</span>
+                  ) : null}
                   {canManage ? (
                     <button type="button" onClick={() => openInstructorAttempts(quiz)}>
                       Attempts
@@ -615,6 +669,7 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </article>
   );

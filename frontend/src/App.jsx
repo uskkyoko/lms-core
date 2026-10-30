@@ -38,7 +38,12 @@ export default function App() {
         setActiveUserId(first ? String(first.id) : "");
       }
       if (!data.length) setLoading(false);
-    }).catch(failure => { setError(failure.message); setLoading(false); });
+    }).catch(failure => {
+      setError(failure.message === "Failed to fetch"
+        ? "Cannot reach the API. Start the Spring Boot server on port 8080, then refresh."
+        : failure.message);
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -50,7 +55,12 @@ export default function App() {
       if (controller.signal.aborted) return;
       setCourses(data);
       setSelectedCourseId(current => data.some(course => course.id === current) ? current : data[0]?.id || null);
-    }).catch(failure => { if (!controller.signal.aborted) setError(failure.message); })
+    }).catch(failure => {
+      if (controller.signal.aborted || failure.name === "AbortError") return;
+      setError(failure.message === "Failed to fetch"
+        ? "Cannot reach the API. Start the Spring Boot server on port 8080, then refresh."
+        : failure.message);
+    })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [activeUserId, activeUser?.id]);
@@ -92,7 +102,7 @@ export default function App() {
       <nav aria-label="Workspace">
         {[['dashboard', 'Dashboard'], ['courses', isAdmin ? 'Course management' : 'My Courses'], ['content', 'Content'], ['quizzes', 'Quizzes'], ['grades', canGrade ? 'Gradebook' : 'Grades'],
           ...(activeUser?.role === 'STUDENT' ? [['progress','Progress']] : []), ...(activeUser?.role === 'INSTRUCTOR' ? [['analytics','Analytics']] : [])]
-          .map(([value,label]) => <button className={`nav-item ${section === value ? 'active' : ''}`} type="button" disabled={busy || loading} key={value} onClick={() => { setSection(value); setEditor(null); }}>{label}</button>)}
+          .map(([value,label]) => <button className={`nav-item ${section === value ? 'active' : ''}`} type="button" disabled={busy || loading} key={value} onClick={() => { setSection(value); setEditor(null); setError(""); setNotice(""); }}>{label}</button>)}
       </nav>
     </aside>
     <main>
@@ -110,8 +120,8 @@ export default function App() {
       {notice && <div role="status" className="banner success">{notice}</div>}
       {loading && <p role="status">Loading courses...</p>}
       {activeUser && !loading && <>
-        <div className="toolbar">
-          <label>Selected course<select value={selectedCourse?.id || ''} disabled={busy} onChange={event => { setSelectedCourseId(Number(event.target.value)); setEditor(null); setNotice(''); }}>
+        <div className="toolbar course-picker">
+          <label>Selected course<select value={selectedCourse?.id || ''} disabled={busy} onChange={event => { setSelectedCourseId(Number(event.target.value)); setEditor(null); setNotice(''); setError(''); }}>
             {!courses.length && <option value="">No courses available</option>}
             {courses.map(course => <option key={course.id} value={course.id}>{course.code} — {course.title}{course.status === 'ARCHIVED' ? ' (Archived)' : ''}</option>)}
           </select></label>
@@ -122,13 +132,15 @@ export default function App() {
         {selectedCourse && section === 'quizzes' && <QuizList key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && section === 'grades' && <Gradebook key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && ['progress','analytics'].includes(section) && <CourseReport key={componentKey} activeUser={activeUser} course={selectedCourse} />}
-        {['dashboard','courses'].includes(section) && <section className="grid">
-          <div><h2>Available courses</h2><p className="muted">{isAdmin ? 'All courses in the system.' : activeUser.role === 'INSTRUCTOR' ? 'Courses assigned to you.' : 'Only courses you are enrolled in.'}</p>
-            <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); setSection('courses'); }}>
-              <span className="code">{course.code} · {course.status === 'ARCHIVED' ? 'Archived' : 'Active'}</span><strong>{course.title}</strong><span className="muted">{course.term}</span>
-            </button>)}</div>
+        {['dashboard','courses'].includes(section) && <section className="dashboard-split">
+          <div className="dashboard-heading">
+            <h2>Available courses</h2>
+            <p className="muted">{isAdmin ? 'All courses in the system.' : activeUser.role === 'INSTRUCTOR' ? 'Courses assigned to you.' : 'Only courses you are enrolled in.'}</p>
           </div>
-          <div>
+          <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); setSection('courses'); }}>
+            <span className="code">{course.code} · {course.status === 'ARCHIVED' ? 'Archived' : 'Active'}</span><strong>{course.title}</strong><span className="muted">{course.term}</span>
+          </button>)}</div>
+          <div className="course-side">
             {editor && isAdmin ? <CourseEditor key={editor.type + (editor.course?.id || '')} actorId={activeUser.id} course={editor.course} users={users} onSaved={saved} onCancel={() => setEditor(null)} onBusy={setBusy} /> : selectedCourse && <>
               <article className="panel"><h2>{selectedCourse.code} — {selectedCourse.title}</h2><p>{selectedCourse.description}</p>
                 <dl><div><dt>Term</dt><dd>{selectedCourse.term}</dd></div><div><dt>Status</dt><dd>{selectedCourse.status}</dd></div><div><dt>Instructors</dt><dd>{selectedCourse.instructors.map(user => user.fullName).join(', ') || 'Not assigned'}</dd></div>

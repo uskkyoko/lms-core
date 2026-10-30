@@ -302,6 +302,10 @@ public class ContentService {
 	@Transactional
 	public DiscussionDto createDiscussion(User actor, Long courseId, CreateDiscussionRequest request) {
 		Course course = visibleCourse(actor, courseId);
+		if (actor.getRole() == Role.STUDENT) {
+			throw new ForbiddenException("Only instructors can start a discussion. Reply to an existing thread instead.");
+		}
+		lms.requireInstructorOrAdmin(actor, course);
 		if (request.title() == null || request.title().isBlank()) {
 			throw new IllegalArgumentException("Discussion title is required.");
 		}

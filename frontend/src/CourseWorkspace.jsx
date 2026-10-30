@@ -59,7 +59,9 @@ export default function CourseWorkspace({ course, activeUser, onError, onNotice 
   }
 
   useEffect(() => {
-    reload().catch((err) => onError(err.message));
+    reload().catch((err) => {
+      if (err?.name !== "AbortError") onError(err.message);
+    });
   }, [course?.id, user?.id]);
 
   async function run(action, successMessage) {
@@ -101,7 +103,7 @@ function ModulesTab({ modules, isStaff, user, courseId, run }) {
   return (
     <>
       {isStaff ? (
-        <form className="panel" onSubmit={(event) => {
+        <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
             await createModule(user.id, courseId, { title, description });
@@ -112,7 +114,7 @@ function ModulesTab({ modules, isStaff, user, courseId, run }) {
           <h2>Add module</h2>
           <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
           <label>Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} /></label>
-          <button className="primary" type="submit">Save module</button>
+          <div className="actions"><button className="primary" type="submit">Save module</button></div>
         </form>
       ) : null}
       {modules.length === 0 ? <div className="empty">No modules in this course yet.</div> : null}
@@ -160,7 +162,7 @@ function AddMaterialForm({ user, moduleId, run }) {
   const [file, setFile] = useState(null);
   const [published, setPublished] = useState(true);
   return (
-    <form className="nested" onSubmit={(event) => {
+    <form className="nested stack-form" onSubmit={(event) => {
       event.preventDefault();
       run(async () => {
         if ((type === "FILE" || (type === "VIDEO" && file)) && file) {
@@ -172,21 +174,23 @@ function AddMaterialForm({ user, moduleId, run }) {
       }, "Material saved.");
     }}>
       <h3>Add material</h3>
-      <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
-      <label>Type
-        <select value={type} onChange={(event) => setType(event.target.value)}>
-          <option value="TEXT">Text page</option>
-          <option value="FILE">File (TXT, DOCX, PDF)</option>
-          <option value="VIDEO">Video</option>
-        </select>
-      </label>
+      <div className="form-row">
+        <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
+        <label>Type
+          <select value={type} onChange={(event) => setType(event.target.value)}>
+            <option value="TEXT">Text page</option>
+            <option value="FILE">File (TXT, DOCX, PDF)</option>
+            <option value="VIDEO">Video</option>
+          </select>
+        </label>
+      </div>
       {type === "TEXT" ? <label>Content<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label> : null}
       {type === "VIDEO" ? <label>Embed link<input value={embedUrl} onChange={(event) => setEmbedUrl(event.target.value)} placeholder="https://www.youtube.com/embed/..." /></label> : null}
       {type === "FILE" || type === "VIDEO" ? (
         <label>File<input type="file" accept={type === "VIDEO" ? ".mp4,.webm" : ".txt,.docx,.pdf"} required={type === "FILE"} onChange={(event) => setFile(event.target.files[0] || null)} /></label>
       ) : null}
       <label className="inline"><input type="checkbox" checked={published} onChange={(event) => setPublished(event.target.checked)} /> Published</label>
-      <button className="primary" type="submit">Save material</button>
+      <div className="actions"><button className="primary" type="submit">Save material</button></div>
     </form>
   );
 }
@@ -203,7 +207,7 @@ function AssignmentsTab({ assignments, submissions, isStaff, isStudent, user, co
   return (
     <>
       {isStaff ? (
-        <form className="panel" onSubmit={(event) => {
+        <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
             await createAssignment(user.id, courseId, {
@@ -220,16 +224,18 @@ function AssignmentsTab({ assignments, submissions, isStaff, isStudent, user, co
           <h2>Create assignment</h2>
           <label>Title<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></label>
           <label>Instructions<textarea value={form.instructions} onChange={(event) => setForm({ ...form, instructions: event.target.value })} /></label>
-          <label>Module
-            <select value={form.moduleId} onChange={(event) => setForm({ ...form, moduleId: event.target.value })}>
-              <option value="">First module</option>
-              {modules.map((module) => <option key={module.id} value={module.id}>{module.title}</option>)}
-            </select>
-          </label>
-          <label>Deadline<input type="datetime-local" value={form.deadline} onChange={(event) => setForm({ ...form, deadline: event.target.value })} required /></label>
-          <label>Max points<input type="number" min="1" value={form.maxPoints} onChange={(event) => setForm({ ...form, maxPoints: event.target.value })} required /></label>
+          <div className="form-row">
+            <label>Module
+              <select value={form.moduleId} onChange={(event) => setForm({ ...form, moduleId: event.target.value })}>
+                <option value="">First module</option>
+                {modules.map((module) => <option key={module.id} value={module.id}>{module.title}</option>)}
+              </select>
+            </label>
+            <label>Deadline<input type="datetime-local" value={form.deadline} onChange={(event) => setForm({ ...form, deadline: event.target.value })} required /></label>
+            <label>Max points<input type="number" min="1" value={form.maxPoints} onChange={(event) => setForm({ ...form, maxPoints: event.target.value })} required /></label>
+          </div>
           <label className="inline"><input type="checkbox" checked={form.published} onChange={(event) => setForm({ ...form, published: event.target.checked })} /> Published</label>
-          <button className="primary" type="submit">Save assignment</button>
+          <div className="actions"><button className="primary" type="submit">Save assignment</button></div>
         </form>
       ) : null}
       {assignments.length === 0 ? <div className="empty">No assignments yet.</div> : null}
@@ -308,7 +314,7 @@ function AnnouncementsTab({ announcements, isStaff, courseId, user, run }) {
   return (
     <>
       {isStaff ? (
-        <form className="panel" onSubmit={(event) => {
+        <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
             await createAnnouncement(user.id, courseId, { title, body });
@@ -318,7 +324,7 @@ function AnnouncementsTab({ announcements, isStaff, courseId, user, run }) {
           <h2>Post announcement</h2>
           <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
           <label>Message<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
-          <button className="primary" type="submit">Publish</button>
+          <div className="actions"><button className="primary" type="submit">Publish</button></div>
         </form>
       ) : null}
       {announcements.length === 0 ? <div className="empty">No announcements yet.</div> : null}
@@ -338,19 +344,24 @@ function DiscussionsTab({ discussions, isStaff, user, courseId, run }) {
   const [body, setBody] = useState("");
   return (
     <>
-      <form className="panel" onSubmit={(event) => {
-        event.preventDefault();
-        run(async () => {
-          await createDiscussion(user.id, courseId, { title, body });
-          setTitle(""); setBody("");
-        }, "Discussion posted.");
-      }}>
-        <h2>Start a discussion</h2>
-        <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
-        <label>Post<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
-        <button className="primary" type="submit">Post</button>
-      </form>
-      {discussions.length === 0 ? <div className="empty">No discussion posts yet.</div> : null}
+      {isStaff ? (
+        <form className="panel stack-form" onSubmit={(event) => {
+          event.preventDefault();
+          run(async () => {
+            await createDiscussion(user.id, courseId, { title, body });
+            setTitle(""); setBody("");
+          }, "Discussion posted.");
+        }}>
+          <h2>Start a discussion</h2>
+          <p className="muted">Students can reply to this thread. Only instructors and administrators can open a new discussion.</p>
+          <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
+          <label>Post<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
+          <div className="actions"><button className="primary" type="submit">Post</button></div>
+        </form>
+      ) : (
+        <div className="empty">The instructor starts course discussions. Reply to a thread below.</div>
+      )}
+      {discussions.length === 0 ? <div className="empty">No discussion threads yet.</div> : null}
       {discussions.map((post) => <DiscussionThread key={post.id} post={post} user={user} isStaff={isStaff} run={run} />)}
     </>
   );
@@ -364,12 +375,12 @@ function ReplyItem({ item, user, isStaff, run }) {
   return (
     <>
       {editing ? (
-        <form onSubmit={(event) => {
+        <form className="stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => { await editDiscussion(user.id, item.id, { body }); setEditing(false); }, "Reply updated.");
         }}>
           <label>Reply<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
-          <button className="primary" type="submit">Save</button>
+          <div className="actions"><button className="primary" type="submit">Save</button></div>
         </form>
       ) : (
         <div>
@@ -395,13 +406,13 @@ function DiscussionThread({ post, user, isStaff, run }) {
   return (
     <article className="panel">
       {editing ? (
-        <form onSubmit={(event) => {
+        <form className="stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => { await editDiscussion(user.id, post.id, draft); setEditing(false); }, "Post updated.");
         }}>
           <label>Title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
           <label>Post<textarea value={draft.body} onChange={(event) => setDraft({ ...draft, body: event.target.value })} required /></label>
-          <button className="primary" type="submit">Save</button>
+          <div className="actions"><button className="primary" type="submit">Save</button></div>
         </form>
       ) : (
         <>
@@ -419,12 +430,12 @@ function DiscussionThread({ post, user, isStaff, run }) {
           <li key={item.id} className="item"><ReplyItem item={item} user={user} isStaff={isStaff} run={run} /></li>
         ))}
       </ul>
-      <form className="nested" onSubmit={(event) => {
+      <form className="nested stack-form" onSubmit={(event) => {
         event.preventDefault();
         run(async () => { await replyToDiscussion(user.id, post.id, reply); setReply(""); }, "Reply posted.");
       }}>
         <label>Reply<textarea value={reply} onChange={(event) => setReply(event.target.value)} required /></label>
-        <button className="primary" type="submit">Reply</button>
+        <div className="actions"><button className="primary" type="submit">Reply</button></div>
       </form>
     </article>
   );
