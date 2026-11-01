@@ -51,39 +51,41 @@ public class ContentDemoDataLoader implements CommandLineRunner {
 	@Transactional
 	public void run(String... args) {
 		Course se331 = courses.findByCodeIgnoreCase("SE331").orElse(null);
-		if (se331 == null || materials.findByModuleCourseAndPublishedTrueOrderByIdAsc(se331).stream().anyMatch(item -> "Syllabus".equals(item.getTitle()))) {
+		if (se331 == null) {
 			return;
 		}
 		User instructor = users.findAll().stream()
 				.filter(user -> "andrii.shevchenko@auk.edu.ua".equals(user.getEmail()))
 				.findFirst()
 				.orElseThrow();
-		User student = users.findAll().stream()
-				.filter(user -> "ksenia.maranda@auk.edu.ua".equals(user.getEmail()))
-				.findFirst()
-				.orElseThrow();
-		Module week1 = modules.findByCourseOrderByOrderNumberAsc(se331).get(0);
-
-		Material syllabus = new Material(week1, "Syllabus", MaterialType.TEXT, true, instructor);
-		syllabus.setBody("Welcome to SE331. Read the weekly materials, submit assignments before the deadline, and use Discussions for questions.");
-		materials.save(syllabus);
-		Material hidden = new Material(week1, "Instructor notes", MaterialType.TEXT, false, instructor);
-		hidden.setBody("Hidden from students until published.");
-		materials.save(hidden);
-		Material video = new Material(week1, "Course overview", MaterialType.VIDEO, true, instructor);
-		video.setEmbedUrl("https://www.youtube.com/embed/8mAITcNt710");
-		materials.save(video);
-
-		announcements.save(new Announcement(
-				se331,
-				"Welcome to SE331",
-				"The first lab is open. Submit before the deadline; replacements are allowed until then.",
-				instructor,
-				LocalDateTime.now()));
-		DiscussionPost question = discussions.save(new DiscussionPost(
-				se331, null, "Where do I upload the proposal?", "Should the proposal be TXT, DOCX, or PDF?", student, LocalDateTime.now()));
-		DiscussionPost reply = discussions.save(new DiscussionPost(
-				se331, question, null, "Any of those three formats is fine.", instructor, LocalDateTime.now()));
-		question.getReplies().add(reply);
+		boolean hasSyllabus = materials.findByModuleCourseAndPublishedTrueOrderByIdAsc(se331).stream()
+				.anyMatch(item -> "Syllabus".equals(item.getTitle()));
+		if (!hasSyllabus) {
+			Module week1 = modules.findByCourseOrderByOrderNumberAsc(se331).get(0);
+			Material syllabus = new Material(week1, "Syllabus", MaterialType.TEXT, true, instructor);
+			syllabus.setBody("Welcome to SE331. Read the weekly materials, submit assignments before the deadline, and use Discussions for questions.");
+			materials.save(syllabus);
+			Material hidden = new Material(week1, "Instructor notes", MaterialType.TEXT, false, instructor);
+			hidden.setBody("Hidden from students until published.");
+			materials.save(hidden);
+			Material video = new Material(week1, "Course overview", MaterialType.VIDEO, true, instructor);
+			video.setEmbedUrl("https://www.youtube.com/embed/8mAITcNt710");
+			materials.save(video);
+			announcements.save(new Announcement(
+					se331,
+					"Welcome to SE331",
+					"The first lab is open. Submit before the deadline; replacements are allowed until then.",
+					instructor,
+					LocalDateTime.now()));
+		}
+		if (discussions.findByCourseAndParentIsNullOrderByCreatedAtDesc(se331).isEmpty()) {
+			discussions.save(new DiscussionPost(
+					se331,
+					null,
+					"Week 1 questions",
+					"Use this thread for questions about this week's materials and the first assignment. Students can reply here.",
+					instructor,
+					LocalDateTime.now()));
+		}
 	}
 }

@@ -10,13 +10,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<Map<String, String>> status(ResponseStatusException ex) {
-		return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", ex.getReason() == null ? "Request failed." : ex.getReason()));
+		return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message",
+				ex.getReason() == null || ex.getReason().isBlank() ? "The request could not be completed." : ex.getReason()));
+	}
+
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity<Map<String, String>> missing(NoResourceFoundException ex) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(Map.of("message", "This action is not available. Restart the API server so it matches the current UI."));
 	}
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Map<String, String>> conflict(DataIntegrityViolationException ex) {

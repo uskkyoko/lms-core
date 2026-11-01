@@ -9,5 +9,6 @@ public record CreateQuizRequest(
 		int timeLimitMinutes,
 		LocalDateTime openAt,
 		LocalDateTime closeAt,
+		Long moduleId,
 		List<QuestionRequest> questions) {
 }

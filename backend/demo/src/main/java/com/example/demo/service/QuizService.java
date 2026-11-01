@@ -104,8 +104,7 @@ public class QuizService {
 		if (request.questions() == null || request.questions().isEmpty()) {
 			throw new IllegalArgumentException("A quiz must contain at least one question.");
 		}
-		Module module = modules.findByCourseOrderByOrderNumberAsc(course).stream().findFirst()
-				.orElseGet(() -> modules.save(new Module(course, "Course content", "Default module", 1)));
+		Module module = resolveModule(course, request.moduleId());
 		Quiz quiz = new Quiz();
 		quiz.setTitle(request.title().trim());
 		quiz.setDescription(request.description());
@@ -381,6 +380,19 @@ public class QuizService {
 		return book;
 	}
 
+	private Module resolveModule(Course course, Long moduleId) {
+		if (moduleId != null) {
+			Module module = modules.findById(moduleId)
+					.orElseThrow(() -> new IllegalArgumentException("Module not found."));
+			if (module.getCourse() == null || !module.getCourse().getId().equals(course.getId())) {
+				throw new IllegalArgumentException("The module does not belong to this course.");
+			}
+			return module;
+		}
+		return modules.findByCourseOrderByOrderNumberAsc(course).stream().findFirst()
+				.orElseGet(() -> modules.save(new Module(course, "Course content", "Default module", 1)));
+	}
+
 	private Question buildQuestion(Quiz quiz, QuestionRequest request, int ignored) {
 		if (request.text() == null || request.text().isBlank() || request.type() == null) {
 			throw new IllegalArgumentException("Each question needs text and a type.");
@@ -592,7 +604,9 @@ public class QuizService {
 				Map<String, Object> optionDto = new LinkedHashMap<>();
 				optionDto.put("id", option.getId());
 				optionDto.put("text", option.getText());
-				optionDto.put("correct", reveal ? option.getIsCorrect() : null);
+				if (reveal) {
+					optionDto.put("correct", option.getIsCorrect());
+				}
 				return optionDto;
 			}).toList();
 			Map<String, Object> questionDto = new LinkedHashMap<>();

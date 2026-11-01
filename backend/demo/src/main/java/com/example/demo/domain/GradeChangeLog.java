@@ -20,28 +20,28 @@ public class GradeChangeLog {
 	private Long id;
 
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "grade_id")
+	@JoinColumn(name = "grade_id", updatable = false)
 	private Grade grade;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private Double oldValue;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private Double newValue;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private Long changedByUserId;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private String changedByName;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private String changedByRole;
 
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false)
 	private LocalDateTime changedAt;
 
-	@Column(length = 1000)
+	@Column(length = 1000, updatable = false)
 	private String reason = "";
 
 	public GradeChangeLog() {
