@@ -91,7 +91,7 @@ public class QuizService {
 	@Transactional
 	public Map<String, Object> createQuiz(User actor, Long courseId, CreateQuizRequest request) {
 		Course course = lmsService.requireCourse(courseId);
-		lmsService.requireInstructorOrAdmin(actor, course);
+		lmsService.requireAssignedInstructor(actor, course);
 		if (request.title() == null || request.title().isBlank()) {
 			throw new IllegalArgumentException("Quiz title is required.");
 		}
@@ -118,6 +118,47 @@ public class QuizService {
 		}
 		Quiz saved = quizzes.save(quiz);
 		return toQuizSummary(saved, actor, LocalDateTime.now());
+	}
+
+	@Transactional(readOnly = true)
+	public Map<String, Object> getQuiz(User actor, Long quizId) {
+		Quiz quiz = requireQuiz(quizId);
+		lmsService.requireAssignedInstructor(actor, quiz.getModule().getCourse());
+		return toQuizEditor(quiz);
+	}
+
+	@Transactional
+	public Map<String, Object> updateQuiz(User actor, Long quizId, CreateQuizRequest request) {
+		Quiz quiz = requireQuiz(quizId);
+		lmsService.requireAssignedInstructor(actor, quiz.getModule().getCourse());
+		if (attempts.existsByQuiz(quiz)) {
+			throw new IllegalArgumentException("This quiz cannot be edited after a student has started an attempt.");
+		}
+		if (request.title() == null || request.title().isBlank()) {
+			throw new IllegalArgumentException("Quiz title is required.");
+		}
+		if (request.timeLimitMinutes() < 1) {
+			throw new IllegalArgumentException("Time limit must be at least 1 minute.");
+		}
+		if (request.openAt() == null || request.closeAt() == null || !request.closeAt().isAfter(request.openAt())) {
+			throw new IllegalArgumentException("The quiz close time must be after the open time.");
+		}
+		if (request.questions() == null || request.questions().isEmpty()) {
+			throw new IllegalArgumentException("A quiz must contain at least one question.");
+		}
+		Course course = quiz.getModule().getCourse();
+		quiz.setTitle(request.title().trim());
+		quiz.setDescription(request.description());
+		quiz.setTimeLimitMinutes(request.timeLimitMinutes());
+		quiz.setOpenAt(request.openAt());
+		quiz.setCloseAt(request.closeAt());
+		quiz.setModule(resolveModule(course, request.moduleId()));
+		quiz.getQuestions().clear();
+		int index = 0;
+		for (QuestionRequest item : request.questions()) {
+			quiz.getQuestions().add(buildQuestion(quiz, item, index++));
+		}
+		return toQuizSummary(quizzes.save(quiz), actor, LocalDateTime.now());
 	}
 
 	@Transactional
@@ -209,7 +250,7 @@ public class QuizService {
 	@Transactional
 	public Map<String, Object> gradeEssays(User actor, Long attemptId, EssayGradeRequest request) {
 		QuizAttempt attempt = requireAttempt(attemptId);
-		lmsService.requireInstructorOrAdmin(actor, attempt.getQuiz().getModule().getCourse());
+		lmsService.requireAssignedInstructor(actor, attempt.getQuiz().getModule().getCourse());
 		if (attempt.getStatus() == QuizAttempt.Status.IN_PROGRESS) {
 			throw new IllegalArgumentException("This attempt has not been submitted yet.");
 		}
@@ -273,7 +314,7 @@ public class QuizService {
 		if (course == null) {
 			throw new IllegalArgumentException("Grade is not linked to a course.");
 		}
-		lmsService.requireInstructorOrAdmin(actor, course);
+		lmsService.requireAssignedInstructor(actor, course);
 		if (request.points() == null || request.points() < 0 || request.points() > grade.getMaxPoints()) {
 			throw new IllegalArgumentException("Points cannot exceed the maximum for this item.");
 		}
@@ -328,6 +369,7 @@ public class QuizService {
 				Map<String, Object> cell = new LinkedHashMap<>();
 				cell.put("type", "QUIZ");
 				cell.put("quizId", quiz.getId());
+				cell.put("attemptId", attempt == null ? null : attempt.getId());
 				cell.put("gradeId", grade == null ? null : grade.getId());
 				cell.put("status", status);
 				cell.put("points", grade == null ? null : grade.getPoints());
@@ -346,6 +388,8 @@ public class QuizService {
 				Map<String, Object> cell = new LinkedHashMap<>();
 				cell.put("type", "ASSIGNMENT");
 				cell.put("assignmentId", assignment.getId());
+				cell.put("submissionId", submission == null ? null : submission.getId());
+				cell.put("fileName", submission == null ? null : submission.getOriginalFileName());
 				cell.put("gradeId", grade == null ? null : grade.getId());
 				cell.put("status", status);
 				cell.put("points", grade == null ? null : grade.getPoints());
@@ -590,6 +634,38 @@ public class QuizService {
 		dto.put("availability", availability);
 		dto.put("studentStatus", studentStatus);
 		dto.put("attemptId", attemptId);
+		dto.put("moduleId", quiz.getModule() == null ? null : quiz.getModule().getId());
+		dto.put("editable", !attempts.existsByQuiz(quiz));
+		return dto;
+	}
+
+	private Map<String, Object> toQuizEditor(Quiz quiz) {
+		List<Map<String, Object>> questions = quiz.getQuestions().stream().map(question -> {
+			List<Map<String, Object>> options = question.getOptions().stream().map(option -> {
+				Map<String, Object> optionDto = new LinkedHashMap<>();
+				optionDto.put("id", option.getId());
+				optionDto.put("text", option.getText());
+				optionDto.put("correct", Boolean.TRUE.equals(option.getIsCorrect()));
+				return optionDto;
+			}).toList();
+			Map<String, Object> questionDto = new LinkedHashMap<>();
+			questionDto.put("id", question.getId());
+			questionDto.put("text", question.getText());
+			questionDto.put("type", question.getType().name());
+			questionDto.put("points", question.getPoints());
+			questionDto.put("options", options);
+			return questionDto;
+		}).toList();
+		Map<String, Object> dto = new LinkedHashMap<>();
+		dto.put("id", quiz.getId());
+		dto.put("title", quiz.getTitle());
+		dto.put("description", quiz.getDescription());
+		dto.put("moduleId", quiz.getModule() == null ? null : quiz.getModule().getId());
+		dto.put("timeLimitMinutes", quiz.getTimeLimitMinutes());
+		dto.put("openAt", quiz.getOpenAt());
+		dto.put("closeAt", quiz.getCloseAt());
+		dto.put("editable", !attempts.existsByQuiz(quiz));
+		dto.put("questions", questions);
 		return dto;
 	}
 

@@ -24,6 +24,7 @@ import com.example.demo.service.ContentService;
 import com.example.demo.service.LmsService;
 import com.example.demo.web.dto.content.AnnouncementDto;
 import com.example.demo.web.dto.content.AssignmentDto;
+import com.example.demo.web.dto.content.CompleteRequest;
 import com.example.demo.web.dto.content.CreateAnnouncementRequest;
 import com.example.demo.web.dto.content.CreateAssignmentRequest;
 import com.example.demo.web.dto.content.CreateDiscussionRequest;
@@ -97,6 +98,14 @@ public class ContentController {
 		return contentService.downloadMaterial(user(userId), materialId);
 	}
 
+	@PatchMapping("/materials/{materialId}/complete")
+	public MaterialDto complete(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long materialId,
+			@Valid @RequestBody CompleteRequest request) {
+		return contentService.setCompleted(user(userId), materialId, request.completed());
+	}
+
 	@GetMapping("/courses/{courseId}/assignments")
 	public List<AssignmentDto> assignments(@RequestHeader(value = "X-User-Id", required = false) Long userId, @PathVariable Long courseId) {
 		return contentService.listAssignments(user(userId), courseId);
@@ -108,6 +117,14 @@ public class ContentController {
 			@PathVariable Long courseId,
 			@Valid @RequestBody CreateAssignmentRequest request) {
 		return contentService.createAssignment(user(userId), courseId, request);
+	}
+
+	@PutMapping("/assignments/{assignmentId}")
+	public AssignmentDto updateAssignment(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long assignmentId,
+			@Valid @RequestBody CreateAssignmentRequest request) {
+		return contentService.updateAssignment(user(userId), assignmentId, request);
 	}
 
 	@PostMapping("/assignments/{assignmentId}/submissions")
@@ -151,6 +168,21 @@ public class ContentController {
 			@PathVariable Long courseId,
 			@Valid @RequestBody CreateAnnouncementRequest request) {
 		return contentService.createAnnouncement(user(userId), courseId, request);
+	}
+
+	@PutMapping("/announcements/{announcementId}")
+	public AnnouncementDto updateAnnouncement(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long announcementId,
+			@Valid @RequestBody CreateAnnouncementRequest request) {
+		return contentService.updateAnnouncement(user(userId), announcementId, request);
+	}
+
+	@DeleteMapping("/announcements/{announcementId}")
+	public void deleteAnnouncement(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long announcementId) {
+		contentService.deleteAnnouncement(user(userId), announcementId);
 	}
 
 	@GetMapping("/courses/{courseId}/discussions")

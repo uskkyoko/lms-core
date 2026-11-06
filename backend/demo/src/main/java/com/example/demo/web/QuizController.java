@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,6 +48,23 @@ public class QuizController {
 			@RequestBody CreateQuizRequest request) {
 		User actor = lmsService.requireUser(userId);
 		return quizService.createQuiz(actor, courseId, request);
+	}
+
+	@GetMapping("/quizzes/{quizId}")
+	public Map<String, Object> get(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long quizId) {
+		User actor = lmsService.requireUser(userId);
+		return quizService.getQuiz(actor, quizId);
+	}
+
+	@PutMapping("/quizzes/{quizId}")
+	public Map<String, Object> update(
+			@RequestHeader(value = "X-User-Id", required = false) Long userId,
+			@PathVariable Long quizId,
+			@RequestBody CreateQuizRequest request) {
+		User actor = lmsService.requireUser(userId);
+		return quizService.updateQuiz(actor, quizId, request);
 	}
 
 	@PostMapping("/quizzes/{quizId}/start")

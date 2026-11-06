@@ -1,8 +1,10 @@
 package com.example.demo.service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import com.example.demo.domain.Course;
 import com.example.demo.domain.DiscussionPost;
 import com.example.demo.domain.Grade;
 import com.example.demo.domain.Material;
+import com.example.demo.domain.MaterialCompletion;
 import com.example.demo.domain.MaterialType;
 import com.example.demo.domain.Module;
 import com.example.demo.domain.Role;
@@ -27,6 +30,7 @@ import com.example.demo.repo.AnnouncementRepository;
 import com.example.demo.repo.AssignmentRepository;
 import com.example.demo.repo.DiscussionPostRepository;
 import com.example.demo.repo.GradeRepository;
+import com.example.demo.repo.MaterialCompletionRepository;
 import com.example.demo.repo.MaterialRepository;
 import com.example.demo.repo.ModuleRepository;
 import com.example.demo.repo.SubmissionRepository;
@@ -59,6 +63,7 @@ public class ContentService {
 	private final LmsService lms;
 	private final ModuleRepository modules;
 	private final MaterialRepository materials;
+	private final MaterialCompletionRepository completions;
 	private final AssignmentRepository assignments;
 	private final SubmissionRepository submissions;
 	private final GradeRepository grades;
@@ -70,6 +75,7 @@ public class ContentService {
 			LmsService lms,
 			ModuleRepository modules,
 			MaterialRepository materials,
+			MaterialCompletionRepository completions,
 			AssignmentRepository assignments,
 			SubmissionRepository submissions,
 			GradeRepository grades,
@@ -79,6 +85,7 @@ public class ContentService {
 		this.lms = lms;
 		this.modules = modules;
 		this.materials = materials;
+		this.completions = completions;
 		this.assignments = assignments;
 		this.submissions = submissions;
 		this.grades = grades;
@@ -91,25 +98,30 @@ public class ContentService {
 	public List<ModuleDto> listModules(User actor, Long courseId) {
 		Course course = visibleCourse(actor, courseId);
 		boolean staff = isStaff(actor, course);
+		Set<Long> completedIds = actor.getRole() == Role.STUDENT
+				? completions.findByStudentAndMaterialModuleCourse(actor, course).stream()
+						.map(item -> item.getMaterial().getId())
+						.collect(Collectors.toCollection(HashSet::new))
+				: Set.of();
 		return modules.findByCourseOrderByOrderNumberAsc(course).stream()
-				.map(module -> toModuleDto(module, staff))
+				.map(module -> toModuleDto(module, staff, completedIds))
 				.toList();
 	}
 
 	@Transactional
 	public ModuleDto createModule(User actor, Long courseId, CreateModuleRequest request) {
 		Course course = visibleCourse(actor, courseId);
-		lms.requireInstructorOrAdmin(actor, course);
+		lms.requireAssignedInstructor(actor, course);
 		int order = modules.findByCourseOrderByOrderNumberAsc(course).size() + 1;
 		String description = request.description() == null ? "" : request.description().trim();
 		Module saved = modules.save(new Module(course, request.title().trim(), description, order));
-		return toModuleDto(saved, true);
+		return toModuleDto(saved, true, Set.of());
 	}
 
 	@Transactional
 	public MaterialDto createMaterial(User actor, Long moduleId, CreateMaterialRequest request) {
 		Module module = requireModule(moduleId);
-		lms.requireInstructorOrAdmin(actor, module.getCourse());
+		lms.requireAssignedInstructor(actor, module.getCourse());
 		if (request.type() == MaterialType.FILE) {
 			throw new IllegalArgumentException("Upload a TXT, DOCX, or PDF file for file materials.");
 		}
@@ -125,13 +137,13 @@ public class ContentService {
 		} else {
 			material.setEmbedUrl(request.embedUrl().trim());
 		}
-		return MaterialDto.from(materials.save(material));
+		return MaterialDto.from(materials.save(material), false);
 	}
 
 	@Transactional
 	public MaterialDto uploadMaterial(User actor, Long moduleId, String title, MaterialType type, boolean published, MultipartFile file) {
 		Module module = requireModule(moduleId);
-		lms.requireInstructorOrAdmin(actor, module.getCourse());
+		lms.requireAssignedInstructor(actor, module.getCourse());
 		if (title == null || title.isBlank()) {
 			throw new IllegalArgumentException("Material title is required.");
 		}
@@ -146,15 +158,36 @@ public class ContentService {
 		material.setStoredFileName(stored.storedFileName());
 		material.setOriginalFileName(stored.originalFileName());
 		material.setContentType(stored.contentType());
-		return MaterialDto.from(materials.save(material));
+		return MaterialDto.from(materials.save(material), false);
 	}
 
 	@Transactional
 	public MaterialDto setPublished(User actor, Long materialId, boolean published) {
 		Material material = requireMaterial(materialId);
-		lms.requireInstructorOrAdmin(actor, material.getModule().getCourse());
+		lms.requireAssignedInstructor(actor, material.getModule().getCourse());
 		material.setPublished(published);
-		return MaterialDto.from(material);
+		return MaterialDto.from(material, false);
+	}
+
+	@Transactional
+	public MaterialDto setCompleted(User actor, Long materialId, boolean completed) {
+		if (actor.getRole() != Role.STUDENT) {
+			throw new ForbiddenException("Only enrolled students can mark materials complete.");
+		}
+		Material material = requireMaterial(materialId);
+		Course course = material.getModule().getCourse();
+		lms.requireEnrolledStudent(actor, course);
+		if (!material.isPublished()) {
+			throw new ForbiddenException("This material is hidden.");
+		}
+		if (completed) {
+			if (completions.findByStudentAndMaterial(actor, material).isEmpty()) {
+				completions.save(new MaterialCompletion(actor, material, LocalDateTime.now()));
+			}
+		} else {
+			completions.deleteByStudentAndMaterial(actor, material);
+		}
+		return MaterialDto.from(material, completed);
 	}
 
 	@Transactional(readOnly = true)
@@ -184,7 +217,7 @@ public class ContentService {
 	@Transactional
 	public AssignmentDto createAssignment(User actor, Long courseId, CreateAssignmentRequest request) {
 		Course course = visibleCourse(actor, courseId);
-		lms.requireInstructorOrAdmin(actor, course);
+		lms.requireAssignedInstructor(actor, course);
 		Module module = request.moduleId() == null
 				? modules.findByCourseOrderByOrderNumberAsc(course).stream().findFirst()
 						.orElseThrow(() -> new IllegalArgumentException("Create a module before adding an assignment."))
@@ -200,6 +233,26 @@ public class ContentService {
 		assignment.setMaxPoints(request.maxPoints() == null ? 100 : request.maxPoints());
 		assignment.setPublished(request.published() == null || request.published());
 		return AssignmentDto.from(assignments.save(assignment));
+	}
+
+	@Transactional
+	public AssignmentDto updateAssignment(User actor, Long assignmentId, CreateAssignmentRequest request) {
+		Assignment assignment = requireAssignment(assignmentId);
+		Course course = assignment.getModule().getCourse();
+		lms.requireAssignedInstructor(actor, course);
+		Module module = request.moduleId() == null
+				? assignment.getModule()
+				: requireModule(request.moduleId());
+		if (!module.getCourse().getId().equals(course.getId())) {
+			throw new IllegalArgumentException("The module does not belong to this course.");
+		}
+		assignment.setModule(module);
+		assignment.setTitle(request.title().trim());
+		assignment.setInstructions(request.instructions() == null ? "" : request.instructions().trim());
+		assignment.setDeadline(request.deadline());
+		assignment.setMaxPoints(request.maxPoints() == null ? assignment.getMaxPoints() : request.maxPoints());
+		assignment.setPublished(request.published() == null || request.published());
+		return AssignmentDto.from(assignment);
 	}
 
 	@Transactional
@@ -263,7 +316,7 @@ public class ContentService {
 		Submission submission = requireSubmission(submissionId);
 		Assignment assignment = submission.getAssignment();
 		Course course = assignment.getModule().getCourse();
-		lms.requireInstructorOrAdmin(actor, course);
+		lms.requireAssignedInstructor(actor, course);
 		if (request.points() < 0 || request.points() > assignment.getMaxPoints()) {
 			throw new IllegalArgumentException("Score must be between 0 and " + assignment.getMaxPoints() + ".");
 		}
@@ -287,10 +340,27 @@ public class ContentService {
 	@Transactional
 	public AnnouncementDto createAnnouncement(User actor, Long courseId, CreateAnnouncementRequest request) {
 		Course course = visibleCourse(actor, courseId);
-		lms.requireInstructorOrAdmin(actor, course);
+		lms.requireAssignedInstructor(actor, course);
 		Announcement saved = announcements.save(new Announcement(
 				course, request.title().trim(), request.body().trim(), actor, LocalDateTime.now()));
 		return AnnouncementDto.from(saved);
+	}
+
+	@Transactional
+	public AnnouncementDto updateAnnouncement(User actor, Long announcementId, CreateAnnouncementRequest request) {
+		Announcement announcement = requireAnnouncement(announcementId);
+		lms.requireAssignedInstructor(actor, announcement.getCourse());
+		announcement.setTitle(request.title().trim());
+		announcement.setBody(request.body().trim());
+		announcement.setUpdatedAt(LocalDateTime.now());
+		return AnnouncementDto.from(announcement);
+	}
+
+	@Transactional
+	public void deleteAnnouncement(User actor, Long announcementId) {
+		Announcement announcement = requireAnnouncement(announcementId);
+		lms.requireAssignedInstructor(actor, announcement.getCourse());
+		announcements.delete(announcement);
 	}
 
 	@Transactional(readOnly = true)
@@ -305,7 +375,7 @@ public class ContentService {
 		if (actor.getRole() == Role.STUDENT) {
 			throw new ForbiddenException("Only instructors can start a discussion. Reply to an existing thread instead.");
 		}
-		lms.requireInstructorOrAdmin(actor, course);
+		lms.requireAssignedInstructor(actor, course);
 		if (request.title() == null || request.title().isBlank()) {
 			throw new IllegalArgumentException("Discussion title is required.");
 		}
@@ -354,10 +424,10 @@ public class ContentService {
 		discussions.delete(post);
 	}
 
-	private ModuleDto toModuleDto(Module module, boolean staff) {
+	private ModuleDto toModuleDto(Module module, boolean staff, Set<Long> completedIds) {
 		List<MaterialDto> visible = materials.findByModuleOrderByIdAsc(module).stream()
 				.filter(material -> staff || material.isPublished())
-				.map(MaterialDto::from)
+				.map(material -> MaterialDto.from(material, completedIds.contains(material.getId())))
 				.toList();
 		return ModuleDto.from(module, visible);
 	}
@@ -417,5 +487,9 @@ public class ContentService {
 
 	private DiscussionPost requireDiscussion(Long postId) {
 		return discussions.findById(postId).orElseThrow(() -> new IllegalArgumentException("Discussion post not found."));
+	}
+
+	private Announcement requireAnnouncement(Long announcementId) {
+		return announcements.findById(announcementId).orElseThrow(() -> new IllegalArgumentException("Announcement not found."));
 	}
 }

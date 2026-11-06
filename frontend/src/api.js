@@ -76,6 +76,18 @@ export function createQuiz(userId, courseId, payload) {
   }).then(readJson);
 }
 
+export function fetchQuiz(userId, quizId) {
+  return fetch(`/api/quizzes/${quizId}`, { headers: headers(userId) }).then(readJson);
+}
+
+export function updateQuiz(userId, quizId, payload) {
+  return fetch(`/api/quizzes/${quizId}`, {
+    method: "PUT",
+    headers: headers(userId, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  }).then(readJson);
+}
+
 export function startQuiz(userId, quizId) {
   return fetch(`/api/quizzes/${quizId}/start`, {
     method: "POST",
@@ -161,6 +173,14 @@ export function uploadMaterial(userId, moduleId, { title, type, published, file 
   }).then(readJson);
 }
 
+export function setMaterialCompleted(userId, materialId, completed) {
+  return fetch(`/api/materials/${materialId}/complete`, {
+    method: "PATCH",
+    headers: headers(userId, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ completed }),
+  }).then(readJson);
+}
+
 export function setMaterialPublished(userId, materialId, published) {
   return fetch(`/api/materials/${materialId}/publish`, {
     method: "PATCH",
@@ -176,6 +196,14 @@ export function fetchAssignments(userId, courseId) {
 export function createAssignment(userId, courseId, payload) {
   return fetch(`/api/courses/${courseId}/assignments`, {
     method: "POST",
+    headers: headers(userId, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  }).then(readJson);
+}
+
+export function updateAssignment(userId, assignmentId, payload) {
+  return fetch(`/api/assignments/${assignmentId}`, {
+    method: "PUT",
     headers: headers(userId, { "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   }).then(readJson);
@@ -212,6 +240,21 @@ export function createAnnouncement(userId, courseId, payload) {
     method: "POST",
     headers: headers(userId, { "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
+  }).then(readJson);
+}
+
+export function updateAnnouncement(userId, announcementId, payload) {
+  return fetch(`/api/announcements/${announcementId}`, {
+    method: "PUT",
+    headers: headers(userId, { "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  }).then(readJson);
+}
+
+export function deleteAnnouncement(userId, announcementId) {
+  return fetch(`/api/announcements/${announcementId}`, {
+    method: "DELETE",
+    headers: headers(userId),
   }).then(readJson);
 }
 

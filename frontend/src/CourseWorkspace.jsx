@@ -5,6 +5,7 @@ import {
   createDiscussion,
   createMaterial,
   createModule,
+  deleteAnnouncement,
   deleteDiscussion,
   downloadNamedFile,
   editDiscussion,
@@ -15,8 +16,11 @@ import {
   fetchSubmissions,
   gradeSubmission,
   replyToDiscussion,
+  setMaterialCompleted,
   setMaterialPublished,
   submitAssignment,
+  updateAnnouncement,
+  updateAssignment,
   uploadMaterial,
 } from "./api.js";
 import { formatDate, toApiDateTime, toDateTimeLocal } from "./format.js";
@@ -39,6 +43,7 @@ export default function CourseWorkspace({ course, activeUser, onError, onNotice 
   const [submissions, setSubmissions] = useState({});
   const user = activeUser;
   const isStaff = user?.role === "ADMINISTRATOR" || user?.role === "INSTRUCTOR";
+  const canEdit = user?.role === "INSTRUCTOR";
   const isStudent = user?.role === "STUDENT";
 
   async function reload() {
@@ -87,22 +92,22 @@ export default function CourseWorkspace({ course, activeUser, onError, onNotice 
           </button>
         ))}
       </div>
-      {tab === "modules" ? <ModulesTab modules={modules} isStaff={isStaff} user={user} courseId={course.id} run={run} /> : null}
+      {tab === "modules" ? <ModulesTab modules={modules} isStaff={isStaff} canEdit={canEdit} user={user} courseId={course.id} run={run} /> : null}
       {tab === "assignments" ? (
-        <AssignmentsTab assignments={assignments} submissions={submissions} isStaff={isStaff} isStudent={isStudent} user={user} courseId={course.id} modules={modules} run={run} />
+        <AssignmentsTab assignments={assignments} submissions={submissions} isStaff={isStaff} canEdit={canEdit} isStudent={isStudent} user={user} courseId={course.id} modules={modules} run={run} />
       ) : null}
-      {tab === "announcements" ? <AnnouncementsTab announcements={announcements} isStaff={isStaff} courseId={course.id} user={user} run={run} /> : null}
-      {tab === "discussions" ? <DiscussionsTab discussions={discussions} isStaff={isStaff} user={user} courseId={course.id} run={run} /> : null}
+      {tab === "announcements" ? <AnnouncementsTab announcements={announcements} isStaff={isStaff} canEdit={canEdit} courseId={course.id} user={user} run={run} /> : null}
+      {tab === "discussions" ? <DiscussionsTab discussions={discussions} isStaff={isStaff} canEdit={canEdit} user={user} courseId={course.id} run={run} /> : null}
     </section>
   );
 }
 
-function ModulesTab({ modules, isStaff, user, courseId, run }) {
+function ModulesTab({ modules, isStaff, canEdit, user, courseId, run }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   return (
     <>
-      {isStaff ? (
+      {canEdit ? (
         <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
@@ -128,7 +133,7 @@ function ModulesTab({ modules, isStaff, user, courseId, run }) {
               <li key={material.id} className="item">
                 <div>
                   <strong>{material.title}</strong>
-                  <p className="muted">{material.type}{material.published ? "" : " · hidden"}{material.originalFileName ? ` · ${material.originalFileName}` : ""}</p>
+                  <p className="muted">{material.type}{material.published ? "" : " · hidden"}{material.completed ? " · completed" : ""}{material.originalFileName ? ` · ${material.originalFileName}` : ""}</p>
                   {material.type === "TEXT" ? <p>{material.body}</p> : null}
                   {material.type === "VIDEO" && material.embedUrl ? (
                     <iframe className="video-frame" src={material.embedUrl} title={material.title} allowFullScreen />
@@ -138,16 +143,21 @@ function ModulesTab({ modules, isStaff, user, courseId, run }) {
                   {material.hasFile ? (
                     <button type="button" onClick={() => run(() => downloadNamedFile(`/api/materials/${material.id}/file`, user.id, material.originalFileName))}>Download</button>
                   ) : null}
-                  {isStaff ? (
+                  {canEdit ? (
                     <button type="button" onClick={() => run(() => setMaterialPublished(user.id, material.id, !material.published), material.published ? "Material hidden." : "Material published.")}>
                       {material.published ? "Hide" : "Publish"}
+                    </button>
+                  ) : null}
+                  {!isStaff ? (
+                    <button type="button" onClick={() => run(() => setMaterialCompleted(user.id, material.id, !material.completed), material.completed ? "Marked as not complete." : "Material marked complete.")}>
+                      {material.completed ? "Completed" : "Mark complete"}
                     </button>
                   ) : null}
                 </div>
               </li>
             ))}
           </ul>
-          {isStaff ? <AddMaterialForm user={user} moduleId={module.id} run={run} /> : null}
+          {canEdit ? <AddMaterialForm user={user} moduleId={module.id} run={run} /> : null}
         </article>
       ))}
     </>
@@ -195,33 +205,44 @@ function AddMaterialForm({ user, moduleId, run }) {
   );
 }
 
-function AssignmentsTab({ assignments, submissions, isStaff, isStudent, user, courseId, modules, run }) {
-  const [form, setForm] = useState({
+function blankAssignment() {
+  return {
     title: "",
     instructions: "",
     moduleId: "",
     deadline: toDateTimeLocal(new Date(Date.now() + 7 * 86400000)),
     maxPoints: 100,
     published: true,
-  });
+  };
+}
+
+function AssignmentsTab({ assignments, submissions, isStaff, canEdit, isStudent, user, courseId, modules, run }) {
+  const [form, setForm] = useState(blankAssignment);
+  const [editingId, setEditingId] = useState(null);
   return (
     <>
-      {isStaff ? (
+      {canEdit ? (
         <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
+          const payload = {
+            title: form.title,
+            instructions: form.instructions,
+            moduleId: form.moduleId ? Number(form.moduleId) : modules[0]?.id,
+            deadline: toApiDateTime(form.deadline),
+            maxPoints: Number(form.maxPoints),
+            published: form.published,
+          };
           run(async () => {
-            await createAssignment(user.id, courseId, {
-              title: form.title,
-              instructions: form.instructions,
-              moduleId: form.moduleId ? Number(form.moduleId) : modules[0]?.id,
-              deadline: toApiDateTime(form.deadline),
-              maxPoints: Number(form.maxPoints),
-              published: form.published,
-            });
-            setForm({ ...form, title: "", instructions: "" });
-          }, "Assignment created.");
+            if (editingId) {
+              await updateAssignment(user.id, editingId, payload);
+              setEditingId(null);
+            } else {
+              await createAssignment(user.id, courseId, payload);
+            }
+            setForm(blankAssignment());
+          }, editingId ? "Assignment updated." : "Assignment created.");
         }}>
-          <h2>Create assignment</h2>
+          <h2>{editingId ? "Edit assignment" : "Create assignment"}</h2>
           <label>Title<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></label>
           <label>Instructions<textarea value={form.instructions} onChange={(event) => setForm({ ...form, instructions: event.target.value })} /></label>
           <div className="form-row">
@@ -235,7 +256,10 @@ function AssignmentsTab({ assignments, submissions, isStaff, isStudent, user, co
             <label>Max points<input type="number" min="1" value={form.maxPoints} onChange={(event) => setForm({ ...form, maxPoints: event.target.value })} required /></label>
           </div>
           <label className="inline"><input type="checkbox" checked={form.published} onChange={(event) => setForm({ ...form, published: event.target.checked })} /> Published</label>
-          <div className="actions"><button className="primary" type="submit">Save assignment</button></div>
+          <div className="actions">
+            <button className="primary" type="submit">{editingId ? "Save changes" : "Save assignment"}</button>
+            {editingId ? <button type="button" onClick={() => { setEditingId(null); setForm(blankAssignment()); }}>Cancel</button> : null}
+          </div>
         </form>
       ) : null}
       {assignments.length === 0 ? <div className="empty">No assignments yet.</div> : null}
@@ -244,8 +268,23 @@ function AssignmentsTab({ assignments, submissions, isStaff, isStudent, user, co
           <h2>{assignment.title}</h2>
           <p>{assignment.instructions}</p>
           <p className="muted">Due {formatDate(assignment.deadline)} · {assignment.maxPoints} points{assignment.published ? "" : " · hidden"}</p>
+          {canEdit ? (
+            <div className="actions">
+              <button type="button" onClick={() => {
+                setEditingId(assignment.id);
+                setForm({
+                  title: assignment.title,
+                  instructions: assignment.instructions || "",
+                  moduleId: String(assignment.moduleId || ""),
+                  deadline: toDateTimeLocal(new Date(assignment.deadline)),
+                  maxPoints: assignment.maxPoints,
+                  published: assignment.published,
+                });
+              }}>Edit assignment</button>
+            </div>
+          ) : null}
           {isStudent ? <StudentSubmit assignment={assignment} user={user} submission={(submissions[assignment.id] || [])[0]} run={run} /> : null}
-          {isStaff ? <StaffSubmissions assignment={assignment} user={user} items={submissions[assignment.id] || []} run={run} /> : null}
+          {isStaff ? <StaffSubmissions assignment={assignment} user={user} items={submissions[assignment.id] || []} run={run} canEdit={canEdit} /> : null}
         </article>
       ))}
     </>
@@ -274,17 +313,17 @@ function StudentSubmit({ assignment, user, submission, run }) {
   );
 }
 
-function StaffSubmissions({ assignment, user, items, run }) {
+function StaffSubmissions({ assignment, user, items, run, canEdit }) {
   return (
     <div className="nested">
       <h3>Submissions</h3>
       {items.length === 0 ? <p className="muted">No submissions yet.</p> : null}
-      {items.map((item) => <GradeRow key={item.id} assignment={assignment} user={user} item={item} run={run} />)}
+      {items.map((item) => <GradeRow key={item.id} assignment={assignment} user={user} item={item} run={run} canEdit={canEdit} />)}
     </div>
   );
 }
 
-function GradeRow({ assignment, user, item, run }) {
+function GradeRow({ assignment, user, item, run, canEdit }) {
   const [points, setPoints] = useState(item.grade?.points ?? "");
   const [feedback, setFeedback] = useState(item.grade?.feedback ?? "");
   return (
@@ -296,6 +335,7 @@ function GradeRow({ assignment, user, item, run }) {
       <div className="actions">
         <button type="button" onClick={() => run(() => downloadNamedFile(`/api/submissions/${item.id}/file`, user.id, item.originalFileName))}>Download</button>
       </div>
+      {canEdit ? (
       <form className="grade-form" onSubmit={(event) => {
         event.preventDefault();
         run(() => gradeSubmission(user.id, item.id, { points: Number(points), feedback }), "Grade saved.");
@@ -304,47 +344,63 @@ function GradeRow({ assignment, user, item, run }) {
         <input value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="Feedback" />
         <button className="primary" type="submit">Save grade</button>
       </form>
+      ) : item.grade ? <p className="muted">{item.grade.points}/{item.grade.maxPoints}. {item.grade.feedback || ""}</p> : <p className="muted">View only — instructors grade submissions.</p>}
     </div>
   );
 }
 
-function AnnouncementsTab({ announcements, isStaff, courseId, user, run }) {
+function AnnouncementsTab({ announcements, isStaff, canEdit, courseId, user, run }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [editingId, setEditingId] = useState(null);
   return (
     <>
-      {isStaff ? (
+      {canEdit ? (
         <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
-            await createAnnouncement(user.id, courseId, { title, body });
+            if (editingId) {
+              await updateAnnouncement(user.id, editingId, { title, body });
+              setEditingId(null);
+            } else {
+              await createAnnouncement(user.id, courseId, { title, body });
+            }
             setTitle(""); setBody("");
-          }, "Announcement posted.");
+          }, editingId ? "Announcement updated." : "Announcement posted.");
         }}>
-          <h2>Post announcement</h2>
+          <h2>{editingId ? "Edit announcement" : "Post announcement"}</h2>
           <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
           <label>Message<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
-          <div className="actions"><button className="primary" type="submit">Publish</button></div>
+          <div className="actions">
+            <button className="primary" type="submit">{editingId ? "Save changes" : "Publish"}</button>
+            {editingId ? <button type="button" onClick={() => { setEditingId(null); setTitle(""); setBody(""); }}>Cancel</button> : null}
+          </div>
         </form>
       ) : null}
       {announcements.length === 0 ? <div className="empty">No announcements yet.</div> : null}
       {announcements.map((item) => (
         <article className="panel" key={item.id}>
           <h2>{item.title}</h2>
-          <p className="muted">{item.author.fullName} · {formatDate(item.createdAt)}</p>
+          <p className="muted">{item.author.fullName} · {formatDate(item.createdAt)}{item.updatedAt ? " · edited" : ""}</p>
           <p>{item.body}</p>
+          {canEdit ? (
+            <div className="actions">
+              <button type="button" onClick={() => { setEditingId(item.id); setTitle(item.title); setBody(item.body); }}>Edit</button>
+              <button type="button" onClick={() => run(() => deleteAnnouncement(user.id, item.id), "Announcement deleted.")}>Delete</button>
+            </div>
+          ) : null}
         </article>
       ))}
     </>
   );
 }
 
-function DiscussionsTab({ discussions, isStaff, user, courseId, run }) {
+function DiscussionsTab({ discussions, isStaff, canEdit, user, courseId, run }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   return (
     <>
-      {isStaff ? (
+      {canEdit ? (
         <form className="panel stack-form" onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
@@ -353,7 +409,7 @@ function DiscussionsTab({ discussions, isStaff, user, courseId, run }) {
           }, "Discussion posted.");
         }}>
           <h2>Start a discussion</h2>
-          <p className="muted">Students can reply to this thread. Only instructors and administrators can open a new discussion.</p>
+          <p className="muted">Students can reply to this thread. Only instructors can open a new discussion.</p>
           <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
           <label>Post<textarea value={body} onChange={(event) => setBody(event.target.value)} required /></label>
           <div className="actions"><button className="primary" type="submit">Post</button></div>
@@ -362,16 +418,16 @@ function DiscussionsTab({ discussions, isStaff, user, courseId, run }) {
         <div className="empty">The instructor starts course discussions. Reply to a thread below.</div>
       )}
       {discussions.length === 0 ? <div className="empty">No discussion threads yet.</div> : null}
-      {discussions.map((post) => <DiscussionThread key={post.id} post={post} user={user} isStaff={isStaff} run={run} />)}
+      {discussions.map((post) => <DiscussionThread key={post.id} post={post} user={user} isStaff={isStaff} canEdit={canEdit} run={run} />)}
     </>
   );
 }
 
-function ReplyItem({ item, user, isStaff, run }) {
+function ReplyItem({ item, user, canModerate, run }) {
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(item.body);
-  const canEdit = item.author.id === user.id;
-  const canDelete = canEdit || isStaff;
+  const ownPost = item.author.id === user.id;
+  const canDelete = ownPost || canModerate;
   return (
     <>
       {editing ? (
@@ -390,19 +446,19 @@ function ReplyItem({ item, user, isStaff, run }) {
         </div>
       )}
       <div className="actions">
-        {canEdit ? <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? "Cancel" : "Edit"}</button> : null}
+        {ownPost ? <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? "Cancel" : "Edit"}</button> : null}
         {canDelete ? <button type="button" onClick={() => run(() => deleteDiscussion(user.id, item.id), "Reply deleted.")}>Delete</button> : null}
       </div>
     </>
   );
 }
 
-function DiscussionThread({ post, user, isStaff, run }) {
+function DiscussionThread({ post, user, canEdit: canModerate, run }) {
   const [reply, setReply] = useState("");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ title: post.title || "", body: post.body });
-  const canEdit = post.author.id === user.id;
-  const canDelete = canEdit || isStaff;
+  const ownPost = post.author.id === user.id;
+  const canDelete = ownPost || canModerate;
   return (
     <article className="panel">
       {editing ? (
@@ -422,12 +478,12 @@ function DiscussionThread({ post, user, isStaff, run }) {
         </>
       )}
       <div className="actions">
-        {canEdit ? <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? "Cancel" : "Edit"}</button> : null}
+        {ownPost ? <button type="button" onClick={() => setEditing((current) => !current)}>{editing ? "Cancel" : "Edit"}</button> : null}
         {canDelete ? <button type="button" onClick={() => run(() => deleteDiscussion(user.id, post.id), "Post deleted.")}>Delete</button> : null}
       </div>
       <ul className="stack">
         {(post.replies || []).map((item) => (
-          <li key={item.id} className="item"><ReplyItem item={item} user={user} isStaff={isStaff} run={run} /></li>
+          <li key={item.id} className="item"><ReplyItem item={item} user={user} canModerate={canModerate} run={run} /></li>
         ))}
       </ul>
       <form className="nested stack-form" onSubmit={(event) => {

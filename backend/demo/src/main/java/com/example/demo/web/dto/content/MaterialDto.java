@@ -14,9 +14,14 @@ public record MaterialDto(
 		String originalFileName,
 		boolean hasFile,
 		boolean published,
+		boolean completed,
 		UserDto createdBy) {
 
 	public static MaterialDto from(Material material) {
+		return from(material, false);
+	}
+
+	public static MaterialDto from(Material material, boolean completed) {
 		return new MaterialDto(
 				material.getId(),
 				material.getModule().getId(),
@@ -27,6 +32,7 @@ public record MaterialDto(
 				material.getOriginalFileName(),
 				material.hasFile(),
 				material.isPublished(),
+				completed,
 				UserDto.from(material.getCreatedBy()));
 	}
 }
