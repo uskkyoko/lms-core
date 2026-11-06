@@ -17,6 +17,8 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
 
 	List<QuizAttempt> findByQuizOrderByStudentFullNameAsc(Quiz quiz);
 
+	boolean existsByQuiz(Quiz quiz);
+
 	@Query("""
 			select distinct a from QuizAttempt a
 			join fetch a.quiz

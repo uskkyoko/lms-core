@@ -45,6 +45,10 @@ test('TC-25 and TC-36: student grades are own-only; instructor gradebook lists e
   await expect(book).toContainText('Yelyzaveta Maranda');
   await expect(book).toContainText('Week 1 Quiz');
   await expect(book.getByRole('button', { name: 'Change' }).first()).toBeVisible();
+  await page.locator('tr', { hasText: 'Yelyzaveta Maranda' }).getByRole('button', { name: 'View answers' }).first().click();
+  await expect(page.getByRole('region', { name: 'Student work' })).toBeVisible();
+  await expect(page.getByText('The browser timer can be changed')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save essay grades' })).toBeVisible();
 });
 
 test('TC-26: instructor grade change is written to history', async ({ page }) => {

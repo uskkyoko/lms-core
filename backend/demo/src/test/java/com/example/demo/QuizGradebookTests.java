@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -186,6 +188,53 @@ class QuizGradebookTests {
 	}
 
 	@Test
+	void instructorCanEditQuizUntilAStudentStartsAnAttempt() throws Exception {
+		long moduleId = ((Number) JsonPath.read(
+				mockMvc.perform(get("/api/courses/1/modules").header("X-User-Id", ANDRII))
+						.andExpect(status().isOk())
+						.andReturn()
+						.getResponse()
+						.getContentAsString(),
+				"$[0].id")).longValue();
+		String openAt = LocalDateTime.now().minusHours(1).toString();
+		String closeAt = LocalDateTime.now().plusDays(2).toString();
+		String createBody = """
+				{"title":"Editable quiz","description":"Draft","timeLimitMinutes":15,"openAt":"%s","closeAt":"%s","moduleId":%d,"questions":[{"text":"Q1","type":"MULTIPLE_CHOICE","points":10,"options":[{"text":"A","correct":true},{"text":"B","correct":false}]}]}
+				""".formatted(openAt, closeAt, moduleId);
+		MvcResult created = mockMvc.perform(post("/api/courses/1/quizzes")
+						.header("X-User-Id", ANDRII)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(createBody))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.editable").value(true))
+				.andReturn();
+		long quizId = ((Number) JsonPath.read(created.getResponse().getContentAsString(), "$.id")).longValue();
+
+		mockMvc.perform(get("/api/quizzes/" + quizId).header("X-User-Id", ANDRII))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.questions.length()").value(1));
+
+		String updateBody = """
+				{"title":"Editable quiz (updated)","description":"Revised","timeLimitMinutes":20,"openAt":"%s","closeAt":"%s","moduleId":%d,"questions":[{"text":"Q1 updated","type":"MULTIPLE_CHOICE","points":12,"options":[{"text":"A","correct":true},{"text":"B","correct":false}]}]}
+				""".formatted(openAt, closeAt, moduleId);
+		mockMvc.perform(put("/api/quizzes/" + quizId)
+						.header("X-User-Id", ANDRII)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(updateBody))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("Editable quiz (updated)"))
+				.andExpect(jsonPath("$.timeLimitMinutes").value(20));
+
+		start(KSENIA, quizId);
+		mockMvc.perform(put("/api/quizzes/" + quizId)
+						.header("X-User-Id", ANDRII)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(updateBody))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(containsString("cannot be edited")));
+	}
+
+	@Test
 	void tc36InstructorGradebookShowsAllStudentsAndItems() throws Exception {
 		mockMvc.perform(get("/api/courses/1/gradebook").header("X-User-Id", ANDRII))
 				.andExpect(status().isOk())
@@ -193,6 +242,21 @@ class QuizGradebookTests {
 				.andExpect(jsonPath("$.items.length()").value(3))
 				.andExpect(jsonPath("$.students[0].totalPoints").exists())
 				.andExpect(jsonPath("$.students[0].percentage").exists());
+	}
+
+	@Test
+	void instructorCanOpenStudentQuizAnswersFromGradebook() throws Exception {
+		MvcResult book = mockMvc.perform(get("/api/courses/1/gradebook").header("X-User-Id", ANDRII))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.students[?(@.fullName=='Yelyzaveta Maranda')].cells[0].status", hasItem("PENDING_GRADING")))
+				.andReturn();
+		List<Number> attemptIds = JsonPath.read(book.getResponse().getContentAsString(),
+				"$.students[?(@.fullName=='Yelyzaveta Maranda')].cells[0].attemptId");
+		mockMvc.perform(get("/api/attempts/" + attemptIds.get(0).longValue()).header("X-User-Id", ANDRII))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.revealAnswers").value(true))
+				.andExpect(jsonPath("$.questions[1].answerText").value(containsString("browser timer")))
+				.andExpect(jsonPath("$.questions[0].selectedOptionId").isNumber());
 	}
 
 	private long quizId(String title) throws Exception {

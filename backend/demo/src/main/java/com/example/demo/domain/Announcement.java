@@ -36,6 +36,8 @@ public class Announcement {
 	@Column(nullable = false)
 	private LocalDateTime createdAt;
 
+	private LocalDateTime updatedAt;
+
 	protected Announcement() {
 	}
 
@@ -59,8 +61,20 @@ public class Announcement {
 		return title;
 	}
 
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
 	public String getBody() {
 		return body;
+	}
+
+	public void setBody(String body) {
+		this.body = body;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
 	}
 
 	public User getAuthor() {
@@ -69,5 +83,9 @@ public class Announcement {
 
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
+	}
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
 	}
 }

@@ -11,7 +11,7 @@ async function role(page, name, sample) {
 
 test('TC-01 to TC-03 and TC-08: switch role and active user, preserve selection and scope courses', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Student Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   await expect(page.getByText('Loading courses...', { exact: true })).toHaveCount(0);
   await role(page, 'Student', 'Uliana Sova');
   await expect(page.getByRole('combobox', { name: 'Selected course' })).toContainText('AI101');
@@ -19,8 +19,10 @@ test('TC-01 to TC-03 and TC-08: switch role and active user, preserve selection 
   await page.reload();
   await expect(page.getByRole('combobox', { name: 'Sample user', exact: true })).toHaveValue('5');
   await role(page, 'Instructor');
-  await expect(page.getByRole('heading', { name: 'Instructor Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   await role(page, 'Administrator');
+  await page.getByRole('navigation', { name: 'Workspace' }).getByRole('button', { name: 'Course management' }).click();
+  await expect(page.getByRole('heading', { name: 'Course management' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Create course', exact: true })).toBeVisible();
 });
 
@@ -28,6 +30,7 @@ test('TC-04 to TC-07, TC-32 and TC-33: complete course and membership management
   await page.goto('/');
   await expect(page.getByText('Loading courses...', { exact: true })).toHaveCount(0);
   await role(page, 'Administrator');
+  await page.getByRole('navigation', { name: 'Workspace' }).getByRole('button', { name: 'Course management' }).click();
   const code = `E2E-${Date.now()}`;
   let courseId;
   try {

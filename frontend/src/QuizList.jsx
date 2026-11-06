@@ -3,12 +3,14 @@ import {
   createQuiz,
   fetchAttempt,
   fetchModules,
+  fetchQuiz,
   fetchQuizAttempts,
   fetchQuizzes,
   gradeEssays,
   saveAnswer,
   startQuiz,
   submitAttempt,
+  updateQuiz,
 } from "./api.js";
 import { formatDate, formatStatus, formatTimer, toApiDateTime, toDateTimeLocal } from "./format.js";
 
@@ -24,6 +26,26 @@ function emptyQuestion() {
   };
 }
 
+function toInputDate(value) {
+  if (!value) {
+    return toDateTimeLocal();
+  }
+  const text = String(value);
+  return text.length >= 16 ? text.slice(0, 16) : toDateTimeLocal(new Date(value));
+}
+
+function blankQuizForm(moduleId = "") {
+  return {
+    title: "",
+    description: "",
+    moduleId,
+    timeLimitMinutes: 10,
+    openAt: toDateTimeLocal(),
+    closeAt: toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+    questions: [emptyQuestion()],
+  };
+}
+
 export default function QuizList({ activeUser, course, onNotice, onError }) {
   const [quizzes, setQuizzes] = useState([]);
   const [modules, setModules] = useState([]);
@@ -32,18 +54,12 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
   const [attempts, setAttempts] = useState([]);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [saving, setSaving] = useState("");
-  const [quizForm, setQuizForm] = useState({
-    title: "",
-    description: "",
-    moduleId: "",
-    timeLimitMinutes: 10,
-    openAt: toDateTimeLocal(),
-    closeAt: toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-    questions: [emptyQuestion()],
-  });
+  const [editingQuizId, setEditingQuizId] = useState(null);
+  const [quizForm, setQuizForm] = useState(blankQuizForm);
 
   const isStudent = activeUser?.role === "STUDENT";
-  const canManage = activeUser?.role === "INSTRUCTOR" || activeUser?.role === "ADMINISTRATOR";
+  const canManage = activeUser?.role === "INSTRUCTOR";
+  const canReview = activeUser?.role === "INSTRUCTOR" || activeUser?.role === "ADMINISTRATOR";
 
   async function loadQuizzes() {
     const [nextQuizzes, nextModules] = await Promise.all([
@@ -155,17 +171,55 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
 
   async function onCreateQuiz(event) {
     event.preventDefault();
+    const payload = {
+      ...quizForm,
+      moduleId: quizForm.moduleId ? Number(quizForm.moduleId) : null,
+      timeLimitMinutes: Number(quizForm.timeLimitMinutes),
+      openAt: toApiDateTime(quizForm.openAt),
+      closeAt: toApiDateTime(quizForm.closeAt),
+    };
     try {
-      await createQuiz(activeUser.id, course.id, {
-        ...quizForm,
-        moduleId: quizForm.moduleId ? Number(quizForm.moduleId) : null,
-        timeLimitMinutes: Number(quizForm.timeLimitMinutes),
-        openAt: toApiDateTime(quizForm.openAt),
-        closeAt: toApiDateTime(quizForm.closeAt),
-      });
+      if (editingQuizId) {
+        await updateQuiz(activeUser.id, editingQuizId, payload);
+        onNotice("Quiz updated.");
+      } else {
+        await createQuiz(activeUser.id, course.id, payload);
+        onNotice("Quiz saved.");
+      }
+      setEditingQuizId(null);
+      setQuizForm(blankQuizForm(modules[0] ? String(modules[0].id) : ""));
       setView("list");
-      onNotice("Quiz saved.");
       await loadQuizzes();
+    } catch (err) {
+      onError(err.message);
+    }
+  }
+
+  async function openEdit(quiz) {
+    if (!quiz.editable) {
+      onError("This quiz cannot be edited after a student has started an attempt.");
+      return;
+    }
+    try {
+      const data = await fetchQuiz(activeUser.id, quiz.id);
+      setEditingQuizId(data.id);
+      setQuizForm({
+        title: data.title,
+        description: data.description || "",
+        moduleId: String(data.moduleId || ""),
+        timeLimitMinutes: data.timeLimitMinutes,
+        openAt: toInputDate(data.openAt),
+        closeAt: toInputDate(data.closeAt),
+        questions: (data.questions || []).map((question) => ({
+          text: question.text,
+          type: question.type,
+          points: question.points,
+          options: question.type === "MULTIPLE_CHOICE"
+            ? (question.options || []).map((option) => ({ text: option.text, correct: option.correct }))
+            : [],
+        })),
+      });
+      setView("create");
     } catch (err) {
       onError(err.message);
     }
@@ -389,9 +443,9 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
                   <td>
                     <button
                       type="button"
-                      onClick={() => openAttempt(item.id, item.status === "PENDING_GRADING" ? "grade" : "review")}
+                      onClick={() => openAttempt(item.id, item.status === "PENDING_GRADING" && canManage ? "grade" : "review")}
                     >
-                      {item.status === "PENDING_GRADING" ? "Grade essays" : "Review"}
+                      {item.status === "PENDING_GRADING" && canManage ? "Grade essays" : "Review"}
                     </button>
                   </td>
                 </tr>
@@ -407,8 +461,8 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
     return (
       <form className="panel stack-form" aria-label="Create quiz" onSubmit={onCreateQuiz}>
         <div className="toolbar">
-          <h2>Create quiz</h2>
-          <button type="button" onClick={() => setView("list")}>
+          <h2>{editingQuizId ? "Edit quiz" : "Create quiz"}</h2>
+          <button type="button" onClick={() => { setEditingQuizId(null); setView("list"); }}>
             Cancel
           </button>
         </div>
@@ -580,7 +634,7 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
           Add question
         </button>{" "}
         <button className="primary" type="submit">
-          Save quiz
+          {editingQuizId ? "Save changes" : "Save quiz"}
         </button>
       </form>
     );
@@ -594,11 +648,17 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
           <p className="muted">
             {isStudent
               ? "One attempt per quiz. A countdown timer submits automatically when time runs out."
-              : "Create quizzes with multiple-choice and essay questions, then grade essays."}
+              : canManage
+                ? "Create quizzes with multiple-choice and essay questions, then grade essays."
+                : "View quizzes and student attempts. Only assigned instructors can create or edit quizzes."}
           </p>
         </div>
         {canManage ? (
-          <button className="primary" type="button" onClick={() => setView("create")}>
+          <button className="primary" type="button" onClick={() => {
+            setEditingQuizId(null);
+            setQuizForm(blankQuizForm(modules[0] ? String(modules[0].id) : ""));
+            setView("create");
+          }}>
             Create quiz
           </button>
         ) : null}
@@ -660,9 +720,19 @@ export default function QuizList({ activeUser, course, onNotice, onError }) {
                     <span className="muted">Not open yet</span>
                   ) : null}
                   {canManage ? (
-                    <button type="button" onClick={() => openInstructorAttempts(quiz)}>
-                      Attempts
-                    </button>
+                      <button
+                        type="button"
+                        disabled={!quiz.editable}
+                        title={quiz.editable ? "Edit quiz" : "Cannot edit after a student has started an attempt"}
+                        onClick={() => openEdit(quiz)}
+                      >
+                        Edit
+                      </button>
+                  ) : null}
+                  {canReview ? (
+                      <button type="button" onClick={() => openInstructorAttempts(quiz)}>
+                        Attempts
+                      </button>
                   ) : null}
                 </td>
               </tr>

@@ -166,6 +166,49 @@ class ContentAndCommunicationTests {
 	}
 
 	@Test
+	void studentCanMarkMaterialCompletedAndProgressUpdates() throws Exception {
+		MvcResult modules = mockMvc.perform(get("/api/courses/{courseId}/modules", SE331).header("X-User-Id", STUDENT))
+				.andExpect(status().isOk())
+				.andReturn();
+		long materialId = ((Number) JsonPath.read(modules.getResponse().getContentAsString(), "$[0].materials[0].id")).longValue();
+
+		mockMvc.perform(patch("/api/materials/{id}/complete", materialId)
+						.header("X-User-Id", INSTRUCTOR)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"completed\":true}"))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(patch("/api/materials/{id}/complete", materialId)
+						.header("X-User-Id", STUDENT)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"completed\":true}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.completed").value(true));
+
+		mockMvc.perform(get("/api/courses/{courseId}/modules", SE331).header("X-User-Id", STUDENT))
+				.andExpect(jsonPath("$[0].materials[0].completed").value(true));
+
+		mockMvc.perform(get("/api/courses/{courseId}/progress", SE331).header("X-User-Id", STUDENT))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.completion[?(@.kind=='MATERIAL')].completed", hasItem(1)));
+	}
+
+	@Test
+	void instructorCanEditAssignmentAfterCreate() throws Exception {
+		long assignmentId = createOpenAssignment("Editable lab");
+		String deadline = LocalDateTime.now().plusDays(3).toString();
+		mockMvc.perform(put("/api/assignments/{id}", assignmentId)
+						.header("X-User-Id", INSTRUCTOR)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"title":"Editable lab (updated)","instructions":"Revised brief","deadline":"%s","maxPoints":80,"published":true}
+								""".formatted(deadline)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("Editable lab (updated)"))
+				.andExpect(jsonPath("$.maxPoints").value(80));
+	}
+
+	@Test
 	void tc17InstructorCreatesAssignment() throws Exception {
 		String deadline = LocalDateTime.now().plusDays(7).toString();
 		mockMvc.perform(post("/api/courses/{courseId}/assignments", SE331)
@@ -250,12 +293,34 @@ class ContentAndCommunicationTests {
 
 	@Test
 	void tc34AnnouncementsAndDiscussionPermissions() throws Exception {
-		mockMvc.perform(post("/api/courses/{courseId}/announcements", SE331)
+		MvcResult announcement = mockMvc.perform(post("/api/courses/{courseId}/announcements", SE331)
 						.header("X-User-Id", INSTRUCTOR)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"title\":\"Office hours\",\"body\":\"Thursday 14:00.\"}"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.title").value("Office hours"));
+				.andExpect(jsonPath("$.title").value("Office hours"))
+				.andReturn();
+		long announcementId = idOf(announcement);
+
+		mockMvc.perform(put("/api/announcements/{id}", announcementId)
+						.header("X-User-Id", INSTRUCTOR)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"title\":\"Office hours (updated)\",\"body\":\"Friday 14:00.\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("Office hours (updated)"))
+				.andExpect(jsonPath("$.body").value("Friday 14:00."));
+
+		mockMvc.perform(put("/api/announcements/{id}", announcementId)
+						.header("X-User-Id", STUDENT)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"title\":\"Nope\",\"body\":\"Students cannot edit.\"}"))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(delete("/api/announcements/{id}", announcementId).header("X-User-Id", STUDENT))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(delete("/api/announcements/{id}", announcementId).header("X-User-Id", INSTRUCTOR))
+				.andExpect(status().isOk());
 
 		mockMvc.perform(post("/api/courses/{courseId}/announcements", SE331)
 						.header("X-User-Id", STUDENT)

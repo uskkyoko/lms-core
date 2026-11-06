@@ -21,15 +21,18 @@ public class LmsService {
     private final QuizRepository quizzes;
     private final AssignmentRepository assignments;
     private final MaterialRepository materials;
+    private final MaterialCompletionRepository completions;
     private final AnnouncementRepository announcements;
     private final DiscussionPostRepository discussions;
 
     public LmsService(UserRepository users, CourseRepository courses, EnrollmentRepository enrollments,
                       ModuleRepository modules, QuizRepository quizzes, AssignmentRepository assignments,
-                      MaterialRepository materials, AnnouncementRepository announcements, DiscussionPostRepository discussions) {
+                      MaterialRepository materials, MaterialCompletionRepository completions,
+                      AnnouncementRepository announcements, DiscussionPostRepository discussions) {
         this.users = users; this.courses = courses; this.enrollments = enrollments;
         this.modules = modules; this.quizzes = quizzes; this.assignments = assignments;
-        this.materials = materials; this.announcements = announcements; this.discussions = discussions;
+        this.materials = materials; this.completions = completions;
+        this.announcements = announcements; this.discussions = discussions;
     }
     public User requireUser(Long userId) {
         if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Select a sample user first.");
@@ -51,12 +54,20 @@ public class LmsService {
     @Transactional
     public CourseDto updateCourse(User actor, Long id, CreateCourseRequest request) { return saveCourse(actor, id, request); }
     private CourseDto saveCourse(User actor, Long id, CreateCourseRequest request) {
-        requireAdmin(actor);
         Course course = id == null ? new Course(request.title().strip(), "", request.description().strip(), request.term().strip()) : requireCourse(id);
+        if (id == null) {
+            requireCanCreateCourse(actor);
+        } else {
+            requireCourseManager(actor, course);
+        }
         String code = request.code().strip().toUpperCase(Locale.ROOT);
         if (id == null ? courses.existsByCodeIgnoreCase(code) : courses.existsByCodeIgnoreCaseAndIdNot(code, id))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Course code already exists. Choose a different unique course code.");
-        Set<User> instructors = resolveInstructors(request.instructorIds());
+        Set<Long> instructorIds = new LinkedHashSet<>(request.instructorIds() == null ? List.of() : request.instructorIds());
+        if (actor.getRole() == Role.INSTRUCTOR) {
+            instructorIds.add(actor.getId());
+        }
+        Set<User> instructors = resolveInstructors(instructorIds);
         course.setTitle(request.title().strip()); course.setCode(code);
         course.setDescription(request.description().strip()); course.setTerm(request.term().strip());
         course.getInstructors().clear(); course.getInstructors().addAll(instructors);
@@ -64,7 +75,9 @@ public class LmsService {
     }
     @Transactional
     public CourseDto archiveCourse(User actor, Long id) {
-        requireAdmin(actor); Course course = requireCourse(id); course.setStatus(CourseStatus.ARCHIVED);
+        Course course = requireCourse(id);
+        requireCourseManager(actor, course);
+        course.setStatus(CourseStatus.ARCHIVED);
         return toDto(course, actor);
     }
     @Transactional
@@ -73,6 +86,7 @@ public class LmsService {
         // Retain learning records and immutable grade history. Archive these courses instead.
         if (quizzes.existsByModuleCourse(course) || assignments.existsByModuleCourse(course))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This course contains assessments. Archive it to preserve learning records and grade history.");
+        completions.deleteByMaterialModuleCourse(course);
         materials.deleteByModuleCourse(course);
         discussions.deleteByCourseAndParentIsNotNull(course);
         discussions.deleteByCourse(course);
@@ -84,7 +98,8 @@ public class LmsService {
     }
     @Transactional
     public CourseDto assignInstructors(User actor, Long id, Set<Long> ids) {
-        requireAdmin(actor); Course course = requireCourse(id);
+        Course course = requireCourse(id);
+        requireCourseManager(actor, course);
         Set<User> instructors = resolveInstructors(ids);
         course.getInstructors().clear(); course.getInstructors().addAll(instructors);
         return toDto(course, actor);
@@ -101,7 +116,8 @@ public class LmsService {
     }
     @Transactional
     public CourseDto enrollStudent(User actor, Long courseId, Long studentId) {
-        requireAdmin(actor); Course course = requireCourse(courseId);
+        Course course = requireCourse(courseId);
+        requireCourseManager(actor, course);
         User student = users.findById(studentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found."));
         if (student.getRole() != Role.STUDENT) throw new IllegalArgumentException("Only students can be enrolled in a course.");
         Enrollment existing = enrollments.findByCourseAndStudent(course, student).orElse(null);
@@ -113,7 +129,8 @@ public class LmsService {
     }
     @Transactional
     public CourseDto removeStudent(User actor, Long courseId, Long studentId) {
-        requireAdmin(actor); Course course = requireCourse(courseId);
+        Course course = requireCourse(courseId);
+        requireCourseManager(actor, course);
         User student = users.findById(studentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found."));
         Enrollment enrollment = enrollments.findByCourseAndStudent(course, student)
             .filter(e -> e.getStatus() == Enrollment.Status.ACTIVE)
@@ -157,5 +174,16 @@ public class LmsService {
     }
     public void requireAdmin(User actor) {
         if (actor.getRole() != Role.ADMINISTRATOR) throw new ForbiddenException("Only administrators can manage courses.");
+    }
+    public void requireCanCreateCourse(User actor) {
+        if (actor.getRole() != Role.ADMINISTRATOR && actor.getRole() != Role.INSTRUCTOR) {
+            throw new ForbiddenException("Only instructors and administrators can create courses.");
+        }
+    }
+    public void requireCourseManager(User actor, Course course) {
+        if (actor.getRole() == Role.ADMINISTRATOR) {
+            return;
+        }
+        requireAssignedInstructor(actor, course);
     }
 }

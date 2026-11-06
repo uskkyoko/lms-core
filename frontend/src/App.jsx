@@ -28,7 +28,19 @@ export default function App() {
   const roleUsers = useMemo(() => users.filter(user => user.role === (activeUser?.role || "STUDENT")), [users, activeUser]);
   const selectedCourse = courses.find(course => course.id === selectedCourseId) || courses[0];
   const isAdmin = activeUser?.role === "ADMINISTRATOR";
-  const canGrade = activeUser?.role === "INSTRUCTOR" || isAdmin;
+  const isInstructor = activeUser?.role === "INSTRUCTOR";
+  const canManageCourses = isAdmin || isInstructor;
+  const canTeach = isInstructor;
+  const canGrade = isInstructor || isAdmin;
+  const pageTitle = {
+    dashboard: "Dashboard",
+    courses: isAdmin ? "Course management" : "My Courses",
+    content: "Content",
+    quizzes: "Quizzes",
+    grades: canGrade ? "Gradebook" : "Grades",
+    progress: "Progress",
+    analytics: "Analytics",
+  }[section] || "Dashboard";
 
   useEffect(() => {
     fetchUsers().then(data => {
@@ -107,7 +119,7 @@ export default function App() {
     </aside>
     <main>
       <header className="topbar">
-        <div><h1>{isAdmin ? "Administrator" : activeUser?.role === "INSTRUCTOR" ? "Instructor" : "Student"} Dashboard</h1>
+        <div><h1>{pageTitle}</h1>
           <p className="muted">{activeUser ? `${activeUser.fullName} · ${activeUser.role.toLowerCase()}` : 'Select a sample user'}</p></div>
         <div className="role-switcher">
           <label>Role<select value={activeUser?.role || 'STUDENT'} disabled={busy || loading} onChange={event => {
@@ -125,32 +137,78 @@ export default function App() {
             {!courses.length && <option value="">No courses available</option>}
             {courses.map(course => <option key={course.id} value={course.id}>{course.code} — {course.title}{course.status === 'ARCHIVED' ? ' (Archived)' : ''}</option>)}
           </select></label>
-          {isAdmin && <button className="primary" disabled={busy} onClick={() => { setEditor({type:'create'}); setSection('courses'); }}>Create course</button>}
+          {canManageCourses && section === 'courses' && <button className="primary" disabled={busy} onClick={() => { setEditor({type:'create'}); setSection('courses'); }}>Create course</button>}
         </div>
         {!courses.length && <p className="empty">No courses for this user yet.</p>}
         {selectedCourse && section === 'content' && <CourseWorkspace key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && section === 'quizzes' && <QuizList key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && section === 'grades' && <Gradebook key={componentKey} activeUser={activeUser} course={selectedCourse} onError={onError} onNotice={onNotice} />}
         {selectedCourse && ['progress','analytics'].includes(section) && <CourseReport key={componentKey} activeUser={activeUser} course={selectedCourse} />}
-        {['dashboard','courses'].includes(section) && <section className="dashboard-split">
-          <div className="dashboard-heading">
-            <h2>Available courses</h2>
-            <p className="muted">{isAdmin ? 'All courses in the system.' : activeUser.role === 'INSTRUCTOR' ? 'Courses assigned to you.' : 'Only courses you are enrolled in.'}</p>
+        {section === 'dashboard' && <section className="dashboard-home">
+          <div className="panel welcome">
+            <h2>Welcome{activeUser ? `, ${activeUser.fullName.split(' ')[0]}` : ''}</h2>
+            <p className="muted">{isAdmin
+              ? 'Use Course management to create, edit, and archive courses and to add or remove people. Content, quizzes, and the gradebook are view-only for administrators.'
+              : isInstructor
+                ? 'Use My Courses to create, edit, and archive your courses and to add or remove instructors and students. Open Content, Quizzes, or Gradebook to teach and grade.'
+                : 'Open a course to read materials, submit assignments, take quizzes, and check your grades.'}</p>
           </div>
-          <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); setSection('courses'); }}>
+          <div className="dashboard-split">
+            <div className="dashboard-heading">
+              <h2>Your courses</h2>
+              <p className="muted">{isAdmin ? 'All courses in the system.' : isInstructor ? 'Courses assigned to you.' : 'Only courses you are enrolled in.'}</p>
+            </div>
+            <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); }}>
+              <span className="code">{course.code} · {course.status === 'ARCHIVED' ? 'Archived' : 'Active'}</span><strong>{course.title}</strong><span className="muted">{course.term}</span>
+            </button>)}</div>
+            <div className="course-side">
+              {selectedCourse && <article className="panel">
+                <h2>{selectedCourse.code} — {selectedCourse.title}</h2>
+                <p>{selectedCourse.description}</p>
+                <dl>
+                  <div><dt>Term</dt><dd>{selectedCourse.term}</dd></div>
+                  <div><dt>Status</dt><dd>{selectedCourse.status}</dd></div>
+                  <div><dt>Instructors</dt><dd>{selectedCourse.instructors.map(user => user.fullName).join(', ') || 'Not assigned'}</dd></div>
+                  {canGrade && <div><dt>Enrolled students</dt><dd>{selectedCourse.students.map(user => user.fullName).join(', ') || 'None'}</dd></div>}
+                </dl>
+                <div className="actions">
+                  <button className="primary" disabled={busy} onClick={() => setSection('content')}>{canTeach ? 'Open content' : 'View content'}</button>
+                  <button disabled={busy} onClick={() => setSection('quizzes')}>{canTeach ? 'Open quizzes' : 'View quizzes'}</button>
+                  <button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? (canTeach ? 'Open gradebook' : 'View gradebook') : 'View grades'}</button>
+                  {activeUser.role === 'STUDENT' && <button disabled={busy} onClick={() => setSection('progress')}>View progress</button>}
+                  {isInstructor && <button disabled={busy} onClick={() => setSection('analytics')}>View analytics</button>}
+                  {canManageCourses && <button disabled={busy} onClick={() => setSection('courses')}>Manage course</button>}
+                </div>
+              </article>}
+            </div>
+          </div>
+        </section>}
+        {section === 'courses' && <section className="dashboard-split">
+          <div className="dashboard-heading">
+            <h2>{isAdmin ? 'Manage courses and people' : 'Manage your courses'}</h2>
+            <p className="muted">{isAdmin
+              ? 'Create, edit, and archive courses. Assign instructors and enroll or remove students. Teaching materials and grades can be viewed, not changed, from Content, Quizzes, and Gradebook.'
+              : isInstructor
+                ? 'Create, edit, and archive courses assigned to you, and add or remove instructors and students. Change materials and grades in Content, Quizzes, and Gradebook.'
+                : 'Courses you are enrolled in.'}</p>
+          </div>
+          <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); }}>
             <span className="code">{course.code} · {course.status === 'ARCHIVED' ? 'Archived' : 'Active'}</span><strong>{course.title}</strong><span className="muted">{course.term}</span>
           </button>)}</div>
           <div className="course-side">
-            {editor && isAdmin ? <CourseEditor key={editor.type + (editor.course?.id || '')} actorId={activeUser.id} course={editor.course} users={users} onSaved={saved} onCancel={() => setEditor(null)} onBusy={setBusy} /> : selectedCourse && <>
+            {editor && canManageCourses ? <CourseEditor key={editor.type + (editor.course?.id || '')} actorId={activeUser.id} course={editor.course} users={users} onSaved={saved} onCancel={() => setEditor(null)} onBusy={setBusy} /> : selectedCourse && <>
               <article className="panel"><h2>{selectedCourse.code} — {selectedCourse.title}</h2><p>{selectedCourse.description}</p>
                 <dl><div><dt>Term</dt><dd>{selectedCourse.term}</dd></div><div><dt>Status</dt><dd>{selectedCourse.status}</dd></div><div><dt>Instructors</dt><dd>{selectedCourse.instructors.map(user => user.fullName).join(', ') || 'Not assigned'}</dd></div>
                   {canGrade && <div><dt>Enrolled students</dt><dd>{selectedCourse.students.map(user => user.fullName).join(', ') || 'None'}</dd></div>}</dl>
-                <div className="actions"><button className="primary" disabled={busy} onClick={() => setSection('content')}>Content</button><button disabled={busy} onClick={() => setSection('quizzes')}>Quizzes</button><button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? 'Gradebook' : 'Grades'}</button>
-                  {!isAdmin && <button disabled={busy} onClick={() => setSection(activeUser.role === 'STUDENT' ? 'progress' : 'analytics')}>{activeUser.role === 'STUDENT' ? 'View progress' : 'View analytics'}</button>}
-                  {isAdmin && <><button disabled={busy} onClick={() => setEditor({type:'edit',course:selectedCourse})}>Edit course</button><button disabled={busy || selectedCourse.status === 'ARCHIVED'} onClick={() => act('archive')}>Archive course</button><button className="danger" disabled={busy} onClick={() => act('delete')}>Delete course</button></>}
+                <div className="actions">
+                  {canManageCourses && <><button disabled={busy} onClick={() => setEditor({type:'edit',course:selectedCourse})}>Edit course</button><button disabled={busy || selectedCourse.status === 'ARCHIVED'} onClick={() => act('archive')}>Archive course</button></>}
+                  {isAdmin && <button className="danger" disabled={busy} onClick={() => act('delete')}>Delete course</button>}
+                  <button disabled={busy} onClick={() => setSection('content')}>{canTeach ? 'Open content' : 'View content'}</button>
+                  <button disabled={busy} onClick={() => setSection('quizzes')}>{canTeach ? 'Open quizzes' : 'View quizzes'}</button>
+                  <button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? (canTeach ? 'Open gradebook' : 'View gradebook') : 'View grades'}</button>
                 </div>
               </article>
-              {isAdmin && <CoursePeople key={componentKey} actorId={activeUser.id} course={selectedCourse} users={users} onUpdated={updated} onBusy={setBusy} />}
+              {canManageCourses && <CoursePeople key={componentKey} actorId={activeUser.id} course={selectedCourse} users={users} onUpdated={updated} onBusy={setBusy} />}
             </>}
           </div>
         </section>}
