@@ -97,16 +97,15 @@ class AdminApiTests {
     }
     @Test void nfr02ForbidsAllAdminMutationsForOtherRoles() throws Exception {
         long id = course("SE331");
-        mvc.perform(post("/api/courses").header("X-User-Id",3).contentType(MediaType.APPLICATION_JSON).content(body("FORBIDDEN"))).andExpect(status().isForbidden());
-        mvc.perform(put("/api/courses/"+id).header("X-User-Id",3).contentType(MediaType.APPLICATION_JSON).content(body("FORBIDDEN"))).andExpect(status().isForbidden());
-        mvc.perform(patch("/api/courses/"+id+"/archive").header("X-User-Id",3)).andExpect(status().isForbidden());
-        mvc.perform(delete("/api/courses/"+id).header("X-User-Id",3)).andExpect(status().isForbidden());
-        mvc.perform(delete("/api/courses/"+id+"/enrollments/3").header("X-User-Id",3)).andExpect(status().isForbidden());
-        mvc.perform(post("/api/courses/"+id+"/enrollments").header("X-User-Id",3).contentType(MediaType.APPLICATION_JSON).content("{\"studentId\":5}" )).andExpect(status().isForbidden());
-        mvc.perform(put("/api/courses/"+id+"/instructors").header("X-User-Id",3).contentType(MediaType.APPLICATION_JSON).content("{\"instructorIds\":[2]}" )).andExpect(status().isForbidden());
-        mvc.perform(delete("/api/courses/"+id).header("X-User-Id",2)).andExpect(status().isForbidden());
-        mvc.perform(post("/api/courses/"+id+"/enrollments").header("X-User-Id",2).contentType(MediaType.APPLICATION_JSON).content("{\"studentId\":5}" ))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.students[*].id", hasItem(5)));
+        for (long user : new long[]{2,3}) {
+            mvc.perform(post("/api/courses").header("X-User-Id",user).contentType(MediaType.APPLICATION_JSON).content(body("FORBIDDEN"))).andExpect(status().isForbidden());
+            mvc.perform(put("/api/courses/"+id).header("X-User-Id",user).contentType(MediaType.APPLICATION_JSON).content(body("FORBIDDEN"))).andExpect(status().isForbidden());
+            mvc.perform(patch("/api/courses/"+id+"/archive").header("X-User-Id",user)).andExpect(status().isForbidden());
+            mvc.perform(delete("/api/courses/"+id).header("X-User-Id",user)).andExpect(status().isForbidden());
+            mvc.perform(delete("/api/courses/"+id+"/enrollments/3").header("X-User-Id",user)).andExpect(status().isForbidden());
+            mvc.perform(post("/api/courses/"+id+"/enrollments").header("X-User-Id",user).contentType(MediaType.APPLICATION_JSON).content("{\"studentId\":5}" )).andExpect(status().isForbidden());
+            mvc.perform(put("/api/courses/"+id+"/instructors").header("X-User-Id",user).contentType(MediaType.APPLICATION_JSON).content("{\"instructorIds\":[2]}" )).andExpect(status().isForbidden());
+        }
     }
     @Test void removalAlsoBlocksExistingQuizAttemptWritesAndGrades() throws Exception {
         mvc.perform(post("/api/quizzes/1/start").header("X-User-Id",3)).andExpect(status().isOk());

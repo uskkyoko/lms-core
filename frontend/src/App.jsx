@@ -29,7 +29,7 @@ export default function App() {
   const selectedCourse = courses.find(course => course.id === selectedCourseId) || courses[0];
   const isAdmin = activeUser?.role === "ADMINISTRATOR";
   const isInstructor = activeUser?.role === "INSTRUCTOR";
-  const canManageCourses = isAdmin || isInstructor;
+  const canManageCourses = isAdmin;
   const canTeach = isInstructor;
   const canGrade = isInstructor || isAdmin;
   const pageTitle = {
@@ -150,7 +150,7 @@ export default function App() {
             <p className="muted">{isAdmin
               ? 'Use Course management to create, edit, and archive courses and to add or remove people. Content, quizzes, and the gradebook are view-only for administrators.'
               : isInstructor
-                ? 'Use My Courses to create, edit, and archive your courses and to add or remove instructors and students. Open Content, Quizzes, or Gradebook to teach and grade.'
+                ? 'Open Content, Quizzes, or Gradebook to teach assigned courses. Course roster and course settings are managed by an administrator.'
                 : 'Open a course to read materials, submit assignments, take quizzes, and check your grades.'}</p>
           </div>
           <div className="dashboard-split">
@@ -177,7 +177,7 @@ export default function App() {
                   <button disabled={busy} onClick={() => setSection('grades')}>{canGrade ? (canTeach ? 'Open gradebook' : 'View gradebook') : 'View grades'}</button>
                   {activeUser.role === 'STUDENT' && <button disabled={busy} onClick={() => setSection('progress')}>View progress</button>}
                   {isInstructor && <button disabled={busy} onClick={() => setSection('analytics')}>View analytics</button>}
-                  {canManageCourses && <button disabled={busy} onClick={() => setSection('courses')}>Manage course</button>}
+                  {isAdmin && <button disabled={busy} onClick={() => setSection('courses')}>Manage course</button>}
                 </div>
               </article>}
             </div>
@@ -185,11 +185,11 @@ export default function App() {
         </section>}
         {section === 'courses' && <section className="dashboard-split">
           <div className="dashboard-heading">
-            <h2>{isAdmin ? 'Manage courses and people' : 'Manage your courses'}</h2>
+            <h2>{isAdmin ? 'Manage courses and people' : 'Assigned courses'}</h2>
             <p className="muted">{isAdmin
               ? 'Create, edit, and archive courses. Assign instructors and enroll or remove students. Teaching materials and grades can be viewed, not changed, from Content, Quizzes, and Gradebook.'
               : isInstructor
-                ? 'Create, edit, and archive courses assigned to you, and add or remove instructors and students. Change materials and grades in Content, Quizzes, and Gradebook.'
+                ? 'Courses assigned to you. Open Content, Quizzes, or Gradebook to change teaching materials and grades. An administrator manages the roster.'
                 : 'Courses you are enrolled in.'}</p>
           </div>
           <div className="cards">{courses.map(course => <button key={course.id} type="button" disabled={busy} className={`card ${selectedCourse?.id === course.id ? 'selected' : ''}`} onClick={() => { setSelectedCourseId(course.id); setEditor(null); }}>
