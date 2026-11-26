@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Classboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --paper: #f4efe6;
+      --card: #fffdf8;
+      --line: #d9d0c3;
+      --stamp: #8f2d2d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    header, main { width: min(760px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 28px 0 8px; }
+    h1 { font-size: 2.2rem; margin: 0; letter-spacing: -0.03em; }
+    .lede { color: var(--muted); margin: 8px 0 0; }
+    .version { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: var(--muted); }
+    form, .notice, .empty {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    form { padding: 16px; display: grid; gap: 10px; margin: 18px 0; }
+    label { display: grid; gap: 4px; font-size: 0.92rem; }
+    input, textarea, button { font: inherit; }
+    input, textarea {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: white;
+      color: var(--ink);
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button {
+      justify-self: start;
+      background: var(--ink);
+      color: var(--paper);
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .toolbar { display: flex; gap: 8px; align-items: end; }
+    .status { min-height: 1.2em; color: var(--stamp); font-size: 0.92rem; }
+    .notice { padding: 14px 16px; margin: 10px 0; }
+    .notice h2 { margin: 0 0 6px; font-size: 1.15rem; }
+    .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
+    .stamp { color: var(--stamp); font-variant: small-caps; letter-spacing: 0.04em; }
+    .empty { padding: 16px; color: var(--muted); }
+    @media (max-width: 640px) {
+      .row, .toolbar { grid-template-columns: 1fr; display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="stamp">University notice board</p>
+    <h1>Classboard</h1>
+    <p class="lede">Room changes, cancellations, and deadline extensions. If this page does not load, students do not see the change.</p>
+    <p class="version" id="version">version …</p>
+  </header>
+  <main>
+    <form id="filter">
+      <div class="toolbar">
+        <label>Course
+          <input id="filter-course" name="course" value="SE331" maxlength="16" autocomplete="off">
+        </label>
+        <button class="secondary" type="submit">Show notices</button>
+      </div>
+    </form>
+    <p class="status" id="status" role="status"></p>
+    <div id="list"></div>
+    <form id="post">
+      <h2>Post a notice</h2>
+      <div class="row">
+        <label>Course code
+          <input name="course_code" value="SE331" required maxlength="16" autocomplete="off">
+        </label>
+        <label>Your name
+          <input name="author_name" required maxlength="80" placeholder="Andrii Shevchenko">
+        </label>
+      </div>
+      <label>Title
+        <input name="title" required maxlength="120" placeholder="Exam room change">
+      </label>
+      <label>Notice
+        <textarea name="body" required maxlength="2000" placeholder="SE331 final moves to room B204 at the same time."></textarea>
+      </label>
+      <button type="submit">Post notice</button>
+    </form>
+  </main>
+  <script>
+    const status = document.querySelector("#status");
+    const list = document.querySelector("#list");
+
+    function say(message) {
+      status.textContent = message || "";
+    }
+
+    async function loadVersion() {
+      const response = await fetch("/health");
+      const body = await response.json();
+      document.querySelector("#version").textContent = "version " + body.version;
+    }
+
+    async function loadNotices() {
+      const course = document.querySelector("#filter-course").value.trim();
+      const query = course ? "?course=" + encodeURIComponent(course) : "";
+      const response = await fetch("/api/announcements" + query);
+      const body = await response.json();
+      if (!response.ok) {
+        say(body.error || "Could not load notices");
+        return;
+      }
+      say("");
+      list.replaceChildren();
+      if (body.announcements.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = course
+          ? "No notices for " + course.toUpperCase() + " yet."
+          : "No notices yet.";
+        list.appendChild(empty);
+        return;
+      }
+      for (const notice of body.announcements) {
+        const card = document.createElement("article");
+        card.className = "notice";
+        const title = document.createElement("h2");
+        title.textContent = notice.title;
+        const meta = document.createElement("p");
+        meta.className = "meta";
+        meta.textContent = notice.course_code + " · " + notice.author_name + " · " + notice.created_at;
+        const text = document.createElement("p");
+        text.textContent = notice.body;
+        card.append(title, meta, text);
+        list.appendChild(card);
+      }
+    }
+
+    document.querySelector("#filter").addEventListener("submit", (event) => {
+      event.preventDefault();
+      loadNotices().catch(() => say("The board is not answering."));
+    });
+
+    document.querySelector("#post").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const payload = Object.fromEntries(new FormData(form).entries());
+      const response = await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        say(body.error || "Could not post");
+        return;
+      }
+      form.querySelector("[name=title]").value = "";
+      form.querySelector("[name=body]").value = "";
+      document.querySelector("#filter-course").value = payload.course_code;
+      say("Posted.");
+      await loadNotices();
+    });
+
+    loadVersion().catch(() => say("The board is not answering."));
+    loadNotices().catch(() => say("The board is not answering."));
+  </script>
+</body>
+</html>

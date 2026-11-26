@@ -1,0 +1,14 @@
+kubectl_manifest.namespace: Refreshing state... [id=/api/v1/namespaces/classboard]
+kubectl_manifest.config["app-service.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/services/classboard]
+kubectl_manifest.config["postgres-pvc.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/persistentvolumeclaims/postgres-data]
+kubernetes_secret_v1.db: Refreshing state... [id=classboard/classboard-db]
+kubectl_manifest.config["postgres-service.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/services/postgres]
+kubectl_manifest.config["configmap.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/configmaps/classboard-config]
+kubectl_manifest.workloads["postgres-deployment.yaml"]: Refreshing state... [id=/apis/apps/v1/namespaces/classboard/deployments/postgres]
+kubectl_manifest.workloads["app-deployment.yaml"]: Refreshing state... [id=/apis/apps/v1/namespaces/classboard/deployments/classboard]
+kubectl_manifest.pdb: Refreshing state... [id=/apis/policy/v1/namespaces/classboard/poddisruptionbudgets/classboard]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
