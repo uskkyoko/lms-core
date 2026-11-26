@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="460" viewBox="0 0 920 460">
+  <rect width="920" height="460" fill="#f4efe6"/>
+  <text x="32" y="40" font-family="Georgia, serif" font-size="22" fill="#1c1915">Classboard  local kind cluster</text>
+  <g font-family="Georgia, serif" font-size="14" fill="#1c1915">
+    <rect x="32" y="70" width="150" height="56" rx="6" fill="#fffdf8" stroke="#1c1915"/>
+    <text x="107" y="102" text-anchor="middle">Browser</text>
+
+    <rect x="240" y="70" width="200" height="56" rx="6" fill="#fffdf8" stroke="#1c1915"/>
+    <text x="340" y="94" text-anchor="middle">control-plane</text>
+    <text x="340" y="112" text-anchor="middle">NodePort :30080</text>
+
+    <rect x="500" y="70" width="180" height="56" rx="6" fill="#fffdf8" stroke="#1c1915"/>
+    <text x="590" y="102" text-anchor="middle">Service classboard</text>
+
+    <rect x="240" y="190" width="200" height="70" rx="6" fill="#fffdf8" stroke="#8f2d2d"/>
+    <text x="340" y="218" text-anchor="middle">worker</text>
+    <text x="340" y="238" text-anchor="middle">classboard pod</text>
+
+    <rect x="500" y="190" width="200" height="70" rx="6" fill="#fffdf8" stroke="#8f2d2d"/>
+    <text x="600" y="218" text-anchor="middle">worker2</text>
+    <text x="600" y="238" text-anchor="middle">classboard pod</text>
+
+    <rect x="360" y="320" width="200" height="56" rx="6" fill="#fffdf8" stroke="#1c1915"/>
+    <text x="460" y="352" text-anchor="middle">Service postgres</text>
+
+    <rect x="620" y="320" width="260" height="90" rx="6" fill="#fffdf8" stroke="#1c1915"/>
+    <text x="750" y="352" text-anchor="middle">control-plane</text>
+    <text x="750" y="372" text-anchor="middle">postgres pod + PVC</text>
+    <text x="750" y="392" text-anchor="middle">single point of failure</text>
+  </g>
+  <g stroke="#1c1915" fill="none" stroke-width="1.4">
+    <line x1="182" y1="98" x2="240" y2="98"/>
+    <line x1="440" y1="98" x2="500" y2="98"/>
+    <line x1="560" y1="126" x2="440" y2="190"/>
+    <line x1="620" y1="126" x2="600" y2="190"/>
+    <line x1="340" y1="260" x2="420" y2="320"/>
+    <line x1="600" y1="260" x2="500" y2="320"/>
+    <line x1="560" y1="348" x2="620" y2="360"/>
+  </g>
+</svg>

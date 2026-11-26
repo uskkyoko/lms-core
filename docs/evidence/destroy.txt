@@ -1,0 +1,691 @@
+[0m[1mkubectl_manifest.namespace: Refreshing state... [id=/api/v1/namespaces/classboard][0m
+[0m[1mkubectl_manifest.config["configmap.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/configmaps/classboard-config][0m
+[0m[1mkubectl_manifest.config["postgres-service.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/services/postgres][0m
+[0m[1mkubectl_manifest.config["app-service.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/services/classboard][0m
+[0m[1mkubectl_manifest.config["postgres-pvc.yaml"]: Refreshing state... [id=/api/v1/namespaces/classboard/persistentvolumeclaims/postgres-data][0m
+[0m[1mkubernetes_secret_v1.db: Refreshing state... [id=classboard/classboard-db][0m
+[0m[1mkubectl_manifest.workloads["app-deployment.yaml"]: Refreshing state... [id=/apis/apps/v1/namespaces/classboard/deployments/classboard][0m
+[0m[1mkubectl_manifest.workloads["postgres-deployment.yaml"]: Refreshing state... [id=/apis/apps/v1/namespaces/classboard/deployments/postgres][0m
+[0m[1mkubectl_manifest.pdb: Refreshing state... [id=/apis/policy/v1/namespaces/classboard/poddisruptionbudgets/classboard][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # kubectl_manifest.config["app-service.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "config" {
+      [31m-[0m[0m api_version             = "v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/api/v1/namespaces/classboard/services/classboard" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "Service" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "3d46ccae-c699-4b3a-9e43-bf1be632bc79" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "3d46ccae-c699-4b3a-9e43-bf1be632bc79" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: classboard
+              namespace: classboard
+            spec:
+              ports:
+              - name: http
+                nodePort: 30080
+                port: 80
+                targetPort: http
+              selector:
+                app: classboard
+              type: NodePort
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.config["configmap.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "config" {
+      [31m-[0m[0m api_version             = "v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/api/v1/namespaces/classboard/configmaps/classboard-config" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "ConfigMap" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "eeeeafeb-3c78-435a-8c39-84842a875c39" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "classboard-config" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "eeeeafeb-3c78-435a-8c39-84842a875c39" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: v1
+            data:
+              APP_VERSION: "1"
+              DB_HOST: postgres
+              DB_NAME: classboard
+              DB_PORT: "5432"
+              DB_USER: classboard
+              LOG_LEVEL: info
+              PORT: "8080"
+            kind: ConfigMap
+            metadata:
+              name: classboard-config
+              namespace: classboard
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.config["postgres-pvc.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "config" {
+      [31m-[0m[0m api_version             = "v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/api/v1/namespaces/classboard/persistentvolumeclaims/postgres-data" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "PersistentVolumeClaim" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "1519771f-8584-4434-b8f5-7565f90a020f" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "postgres-data" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "1519771f-8584-4434-b8f5-7565f90a020f" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: v1
+            kind: PersistentVolumeClaim
+            metadata:
+              name: postgres-data
+              namespace: classboard
+            spec:
+              accessModes:
+              - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.config["postgres-service.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "config" {
+      [31m-[0m[0m api_version             = "v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/api/v1/namespaces/classboard/services/postgres" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "Service" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "491f0005-0c6d-403e-bbf2-8ad7b08f8c4b" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "postgres" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "491f0005-0c6d-403e-bbf2-8ad7b08f8c4b" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: postgres
+              namespace: classboard
+            spec:
+              ports:
+              - name: postgres
+                port: 5432
+                targetPort: postgres
+              selector:
+                app: postgres
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.namespace[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "namespace" {
+      [31m-[0m[0m api_version             = "v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/api/v1/namespaces/classboard" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "Namespace" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "baba5610-e6ea-4dfa-bd21-47cdcd147dd0" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "baba5610-e6ea-4dfa-bd21-47cdcd147dd0" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                app.kubernetes.io/name: classboard
+              name: classboard
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.pdb[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "pdb" {
+      [31m-[0m[0m api_version             = "policy/v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/apis/policy/v1/namespaces/classboard/poddisruptionbudgets/classboard" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "PodDisruptionBudget" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "621a4850-628c-4e63-b6d3-e44c3bbb9f84" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "621a4850-628c-4e63-b6d3-e44c3bbb9f84" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: policy/v1
+            kind: PodDisruptionBudget
+            metadata:
+              name: classboard
+              namespace: classboard
+            spec:
+              minAvailable: 1
+              selector:
+                matchLabels:
+                  app: classboard
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.workloads["app-deployment.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "workloads" {
+      [31m-[0m[0m api_version             = "apps/v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/apis/apps/v1/namespaces/classboard/deployments/classboard" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "Deployment" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "2f674a82-c84b-4d36-aa04-00a4deed8623" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "2f674a82-c84b-4d36-aa04-00a4deed8623" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              labels:
+                app: classboard
+              name: classboard
+              namespace: classboard
+            spec:
+              replicas: 2
+              selector:
+                matchLabels:
+                  app: classboard
+              strategy:
+                rollingUpdate:
+                  maxSurge: 1
+                  maxUnavailable: 0
+                type: RollingUpdate
+              template:
+                metadata:
+                  labels:
+                    app: classboard
+                spec:
+                  containers:
+                  - env:
+                    - name: PORT
+                      valueFrom:
+                        configMapKeyRef:
+                          key: PORT
+                          name: classboard-config
+                    - name: APP_VERSION
+                      valueFrom:
+                        configMapKeyRef:
+                          key: APP_VERSION
+                          name: classboard-config
+                    - name: LOG_LEVEL
+                      valueFrom:
+                        configMapKeyRef:
+                          key: LOG_LEVEL
+                          name: classboard-config
+                    - name: DB_HOST
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_HOST
+                          name: classboard-config
+                    - name: DB_PORT
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_PORT
+                          name: classboard-config
+                    - name: DB_NAME
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_NAME
+                          name: classboard-config
+                    - name: DB_USER
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_USER
+                          name: classboard-config
+                    - name: DB_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          key: DB_PASSWORD
+                          name: classboard-db
+                    image: classboard:local
+                    imagePullPolicy: IfNotPresent
+                    lifecycle:
+                      preStop:
+                        exec:
+                          command:
+                          - python
+                          - -c
+                          - import time; time.sleep(2)
+                    livenessProbe:
+                      failureThreshold: 6
+                      httpGet:
+                        path: /health
+                        port: http
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+                      timeoutSeconds: 3
+                    name: classboard
+                    ports:
+                    - containerPort: 8080
+                      name: http
+                    readinessProbe:
+                      failureThreshold: 3
+                      httpGet:
+                        path: /ready
+                        port: http
+                      initialDelaySeconds: 3
+                      periodSeconds: 5
+                      timeoutSeconds: 3
+                    resources:
+                      limits:
+                        cpu: 250m
+                        memory: 128Mi
+                      requests:
+                        cpu: 50m
+                        memory: 64Mi
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                        - ALL
+                      readOnlyRootFilesystem: true
+                    volumeMounts:
+                    - mountPath: /tmp
+                      name: tmp
+                  securityContext:
+                    fsGroup: 10001
+                    runAsNonRoot: true
+                    runAsUser: 10001
+                    seccompProfile:
+                      type: RuntimeDefault
+                  terminationGracePeriodSeconds: 15
+                  topologySpreadConstraints:
+                  - labelSelector:
+                      matchLabels:
+                        app: classboard
+                    maxSkew: 1
+                    topologyKey: kubernetes.io/hostname
+                    whenUnsatisfiable: ScheduleAnyway
+                  volumes:
+                  - emptyDir: {}
+                    name: tmp
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubectl_manifest.workloads["postgres-deployment.yaml"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubectl_manifest" "workloads" {
+      [31m-[0m[0m api_version             = "apps/v1" [90m-> null[0m[0m
+      [31m-[0m[0m apply_only              = false [90m-> null[0m[0m
+      [31m-[0m[0m force_conflicts         = false [90m-> null[0m[0m
+      [31m-[0m[0m force_new               = false [90m-> null[0m[0m
+      [31m-[0m[0m id                      = "/apis/apps/v1/namespaces/classboard/deployments/postgres" [90m-> null[0m[0m
+      [31m-[0m[0m kind                    = "Deployment" [90m-> null[0m[0m
+      [31m-[0m[0m live_manifest_incluster = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m live_uid                = "194d54ac-a17f-444f-bdaf-fad70c7b0f41" [90m-> null[0m[0m
+      [31m-[0m[0m name                    = "postgres" [90m-> null[0m[0m
+      [31m-[0m[0m namespace               = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m server_side_apply       = false [90m-> null[0m[0m
+      [31m-[0m[0m uid                     = "194d54ac-a17f-444f-bdaf-fad70c7b0f41" [90m-> null[0m[0m
+      [31m-[0m[0m validate_schema         = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_rollout        = true [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body               = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m yaml_body_parsed        = <<-EOT
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              labels:
+                app: postgres
+              name: postgres
+              namespace: classboard
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: postgres
+              strategy:
+                type: Recreate
+              template:
+                metadata:
+                  labels:
+                    app: postgres
+                spec:
+                  affinity:
+                    nodeAffinity:
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                        - matchExpressions:
+                          - key: node-role.kubernetes.io/control-plane
+                            operator: Exists
+                  containers:
+                  - args:
+                    - -c
+                    - shared_buffers=64MB
+                    - -c
+                    - max_connections=30
+                    env:
+                    - name: POSTGRES_DB
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_NAME
+                          name: classboard-config
+                    - name: POSTGRES_USER
+                      valueFrom:
+                        configMapKeyRef:
+                          key: DB_USER
+                          name: classboard-config
+                    - name: POSTGRES_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          key: DB_PASSWORD
+                          name: classboard-db
+                    - name: PGDATA
+                      value: /var/lib/postgresql/data/pgdata
+                    image: postgres:16-alpine
+                    imagePullPolicy: IfNotPresent
+                    livenessProbe:
+                      exec:
+                        command:
+                        - pg_isready
+                        - -U
+                        - classboard
+                        - -d
+                        - classboard
+                      failureThreshold: 6
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+                      timeoutSeconds: 3
+                    name: postgres
+                    ports:
+                    - containerPort: 5432
+                      name: postgres
+                    readinessProbe:
+                      exec:
+                        command:
+                        - pg_isready
+                        - -U
+                        - classboard
+                        - -d
+                        - classboard
+                      failureThreshold: 12
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+                      timeoutSeconds: 3
+                    resources:
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                      requests:
+                        cpu: 100m
+                        memory: 256Mi
+                    volumeMounts:
+                    - mountPath: /var/lib/postgresql/data
+                      name: data
+                  securityContext:
+                    fsGroup: 70
+                    runAsNonRoot: true
+                    runAsUser: 70
+                    seccompProfile:
+                      type: RuntimeDefault
+                  tolerations:
+                  - effect: NoSchedule
+                    key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+                  volumes:
+                  - name: data
+                    persistentVolumeClaim:
+                      claimName: postgres-data
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m yaml_incluster          = (sensitive value) [90m-> null[0m[0m
+    }
+
+[1m  # kubernetes_secret_v1.db[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kubernetes_secret_v1" "db" {
+      [31m-[0m[0m binary_data_wo                 = (write-only attribute) [90m-> null[0m[0m
+      [31m-[0m[0m data                           = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m data_wo                        = (write-only attribute) [90m-> null[0m[0m
+      [31m-[0m[0m id                             = "classboard/classboard-db" [90m-> null[0m[0m
+      [31m-[0m[0m immutable                      = false [90m-> null[0m[0m
+      [31m-[0m[0m type                           = "Opaque" [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_service_account_token = true [90m-> null[0m[0m
+
+      [31m-[0m[0m metadata {
+          [31m-[0m[0m annotations      = {} [90m-> null[0m[0m
+          [31m-[0m[0m generation       = 0 [90m-> null[0m[0m
+          [31m-[0m[0m labels           = {} [90m-> null[0m[0m
+          [31m-[0m[0m name             = "classboard-db" [90m-> null[0m[0m
+          [31m-[0m[0m namespace        = "classboard" [90m-> null[0m[0m
+          [31m-[0m[0m resource_version = "985" [90m-> null[0m[0m
+          [31m-[0m[0m uid              = "7e30e9d0-8ee8-4bc1-87ce-4882c62b79f5" [90m-> null[0m[0m
+            [90m# (1 unchanged attribute hidden)[0m[0m
+        }
+    }
+
+[1mPlan:[0m [0m0 to add, 0 to change, 9 to destroy.
+
+Changes to Outputs:
+  [31m-[0m[0m app_image = "classboard:local" [90m-> null[0m[0m
+  [31m-[0m[0m app_url   = "http://127.0.0.1:30080" [90m-> null[0m[0m
+  [31m-[0m[0m namespace = "classboard" [90m-> null[0m[0m
+[0m[1mkubectl_manifest.pdb: Destroying... [id=/apis/policy/v1/namespaces/classboard/poddisruptionbudgets/classboard][0m[0m
+[0m[1mkubectl_manifest.pdb: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.workloads["postgres-deployment.yaml"]: Destroying... [id=/apis/apps/v1/namespaces/classboard/deployments/postgres][0m[0m
+[0m[1mkubectl_manifest.workloads["app-deployment.yaml"]: Destroying... [id=/apis/apps/v1/namespaces/classboard/deployments/classboard][0m[0m
+[0m[1mkubectl_manifest.workloads["postgres-deployment.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.workloads["app-deployment.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubernetes_secret_v1.db: Destroying... [id=classboard/classboard-db][0m[0m
+[0m[1mkubectl_manifest.config["app-service.yaml"]: Destroying... [id=/api/v1/namespaces/classboard/services/classboard][0m[0m
+[0m[1mkubectl_manifest.config["configmap.yaml"]: Destroying... [id=/api/v1/namespaces/classboard/configmaps/classboard-config][0m[0m
+[0m[1mkubectl_manifest.config["postgres-pvc.yaml"]: Destroying... [id=/api/v1/namespaces/classboard/persistentvolumeclaims/postgres-data][0m[0m
+[0m[1mkubectl_manifest.config["postgres-service.yaml"]: Destroying... [id=/api/v1/namespaces/classboard/services/postgres][0m[0m
+[0m[1mkubectl_manifest.config["configmap.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.config["postgres-pvc.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubernetes_secret_v1.db: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.config["postgres-service.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.config["app-service.yaml"]: Destruction complete after 0s[0m
+[0m[1mkubectl_manifest.namespace: Destroying... [id=/api/v1/namespaces/classboard][0m[0m
+[0m[1mkubectl_manifest.namespace: Destruction complete after 0s[0m
+[0m[1m[32m
+Destroy complete! Resources: 9 destroyed.[0m
+[0m[1mkind_cluster.this: Refreshing state... [id=classboard-][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # kind_cluster.this[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "kind_cluster" "this" {
+      [31m-[0m[0m client_certificate     = <<-EOT
+            -----BEGIN CERTIFICATE-----
+            MIIDKTCCAhGgAwIBAgIIE99pPUZBx+cwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+            AxMKa3ViZXJuZXRlczAeFw0yNjExMjYxMDA4NTZaFw0yNzExMjYxMDEzNTZaMDwx
+            HzAdBgNVBAoTFmt1YmVhZG06Y2x1c3Rlci1hZG1pbnMxGTAXBgNVBAMTEGt1YmVy
+            bmV0ZXMtYWRtaW4wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDEa3bm
+            4I83+ZxQvQKebgZWBXJyp4DD3a/mIPsGaWpGLCu5EltMnMTqbxlVY/GX6OiTn1Kd
+            kJPCPQ4VJI2uPYW2pOXRpJSUFd34mm/nJmDYFSfRmrlpx1ulW7QjjBA6LXPbseFN
+            s4V1CaRR9jJeSI+bERRS+GRG8KqrsT67E6BDOEjtFxiAgYZkNCMe35DoUK7ObcMk
+            8530gger9pgqHIY82izFEDjfx/1/xZLoWDdV/R3VZUyYuE68jw7LCEBiMswCWuGi
+            YXJDh7iCVsBc+/u8XYH7deWRDTRi8P5DcE5MPy/5HdmSDQVHHUv6ys0LFoZIBQm4
+            39J8zV0d+xxCsuenAgMBAAGjVjBUMA4GA1UdDwEB/wQEAwIFoDATBgNVHSUEDDAK
+            BggrBgEFBQcDAjAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFA38xb8iepw2Z8xM
+            N3cWSNRQgwZvMA0GCSqGSIb3DQEBCwUAA4IBAQBok81VdpHDLbMU6yI+JJg5tXi5
+            u5QdDwlrDMTkqJk0Z9iu3y4hagZndqKUu5+pESGoVDrD4FV/3jK1qUKQyJupvgHH
+            6gEdT01Prnt4Ngu2iDxqrU0REH0TepPN82WPOiQ296WZwah8F1jbnGTYi6qzH65V
+            N3QW3iJDQTaTWm4qChmeEos0f0csLHWmUdG02hIlqDSYbY3mIpgrU7Z8YNcdovRJ
+            7eCts5QFcK35daPQfEsX+scbkk/o5Eua7UyQWtsNOzph8hZQae0PK0LLOJKYASFW
+            0FiUhyUAjHSyp+MVQ/irGMHOmaJi9bqB6w5fNm1f0vywwv0Ypejz5rxrwjQf
+            -----END CERTIFICATE-----
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m client_key             = <<-EOT
+            -----BEGIN RSA PRIVATE KEY-----
+            MIIEpAIBAAKCAQEAxGt25uCPN/mcUL0Cnm4GVgVycqeAw92v5iD7BmlqRiwruRJb
+            TJzE6m8ZVWPxl+jok59SnZCTwj0OFSSNrj2FtqTl0aSUlBXd+Jpv5yZg2BUn0Zq5
+            acdbpVu0I4wQOi1z27HhTbOFdQmkUfYyXkiPmxEUUvhkRvCqq7E+uxOgQzhI7RcY
+            gIGGZDQjHt+Q6FCuzm3DJPOd9IIHq/aYKhyGPNosxRA438f9f8WS6Fg3Vf0d1WVM
+            mLhOvI8OywhAYjLMAlrhomFyQ4e4glbAXPv7vF2B+3XlkQ00YvD+Q3BOTD8v+R3Z
+            kg0FRx1L+srNCxaGSAUJuN/SfM1dHfscQrLnpwIDAQABAoIBABc1m5cscb/rfs0L
+            iIOv/I+tlRh3Mn/ychZ/TyoyypwAHCqCQMeMvrf06MluRd3tZ44KBXkY3FzXWhKl
+            fxhXrLUoRv++ss/Mxa3akd5+anMeDNZ3sfEN3YZsj5yjsEcvl8EeA8FqtRpfSUtm
+            DA2YBWANZJlpQHAhgAlJqF/ysb0/dAszVyTfuZpI6mwb5SqDSQWyaPt9kh1xr4kC
+            n6xzkhyDFSWLO41JIMi4tdGxN2zjZJiATXJLySw0iBaML9LcYm3J0byauDhHZ0FG
+            Oupsl+5wuIqVhpn5c62WuE/mYOP3xKNhSW1MEvEztFlRVj4ZuhgWgfTrDMg/N3tq
+            VimCBAECgYEAyIXIQZt5iBDMsw7q4PAbtfmxaUt3yOEd5SIud6ooOLCrZcWg/heF
+            25dSp/8+InM+b/DPXNYPEZPit1SPrO7RbJJjQXWgbG087+uM1WKr3JNUNp+yJkh0
+            4UkAE33IXbvuDRyxBMeoBah2+J1F8rmKnO/5K2TSBBXG1P0xzNtEkt8CgYEA+sMY
+            z79AHCTGfR6OkAWt+qZXXq3lKu0u0DN+2SAcjHysE++N3v8cpH3SLCdIU1yRq+m2
+            iIiz95r/PbVFlqfejaWDRxpb1qnf9LteJJvqfXkloCRKlYPVOom6xYdJPGMScD6c
+            Atqb/7Wz5OsVQ5flB27FMHaIdfZ/IsB2N3msTDkCgYBWlgYZ5lO9IFvzua5MgQHG
+            O1KTQAYyVJq/FVpxS6VgjVEFeigBcBDZ+Ga1qi6fW5oLZjV0Re5tzajpNvdvWhRO
+            SIvZeTxTdXwJsXG3toq1jVyg1aZsh38IxKfmwrqhVwP833XEtZ3lC5CL3AWXQO0M
+            xUaXqUpSf0DDOa2mYswiiwKBgQCWc+H6G3yCpkn1HhVZMh8tqQn4w4shE0eoIY11
+            BoA6hj7Ug0Fyz0vHIbqtRTBu27aHF+Wty5926ydDRfSnrLap8+ltCtKZXDkD5Dta
+            6bVqbPp3N+8MABo6UhKem0oEkkio0dfXGoTIiqORsL6EXKlMqVhkeGntpOSo3CLR
+            rA4FeQKBgQCaUfUhU5MIazDWdTy5tSUxD8BXy291NFR3TIUEYRI2esokH5R2stHo
+            8Zkx2qDEeaKLpVWy5LGbSg18zyUb5lTC7IaOVdqe15ZsP0F+gb26MWvxLFfJNCQg
+            snGZjEpTRMqQ5EV8hrhYIZzJdmUPUHqVN9P8aX93cZfrhF0m0IsyhQ==
+            -----END RSA PRIVATE KEY-----
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m cluster_ca_certificate = <<-EOT
+            -----BEGIN CERTIFICATE-----
+            MIIDBTCCAe2gAwIBAgIIeNtOqBNrzAkwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+            AxMKa3ViZXJuZXRlczAeFw0yNjExMjYxMDA4NTZaFw0zNjExMjMxMDEzNTZaMBUx
+            EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+            AoIBAQDAz+QMnfE3wiGDS5jeG8QMsnjMLaaTO/efnRhUWnJwtPwzZTHP3ZYDv9eQ
+            JETc6QjBN7Zvx3iqfsxm4riA6IS/JrRzQOCYKidTnnavhLH8DMPtnjWjrHUXgNKA
+            OJY1Fmn22uq5UPSbCuozUW++U6W9GUZ5vq/qj87Az1e3pHu2mJ5feL+Sv+wbyYGw
+            2Bew2xDB2yKhAMptpJ8kMHwRymW/C6ERvg7lz1XRrbHviM/CbsYZJsMFpXlKkbUP
+            OEp9Hp4A3Hm/2jI+ejDWCanrxR2RfNwSA3Ppj9ICEt7Kl4N4Ckf+alsDK5Ae7d5Z
+            thUsP1oW4N1P3jPB4ozGBsTOsOD5AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+            BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQN/MW/InqcNmfMTDd3FkjUUIMGbzAV
+            BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQCu0QlKmNm6
+            Ps2fxozhZqBA9yxNKULlSJuAInElU0R2bMaC/YQFKZ/uae68eNHPq+2Y0ALZ2p50
+            dYA2OTx1wYxXj2NlnDFjzlw0isf7aHdd21W0SugTm9DmhCedcw2s1oGt5XrARReg
+            d+bJAGBK0f6iSSPNyw75zT2wZGen9e2k0Pd2FoRv5yVRvNSAJaE631kJdL9RoIsK
+            rIn6nU2fHEm92M18ON7dDUeVM3pus8hC+8bArnUOehG8GkyUe0y0Rz9mY/OXTUBH
+            E2ybFBhPqDNG6zHcAPr4htnRwnngk1vG6yKcpPkBnuZ/l7JZ6XToo15Erfif4AXb
+            JrfUdw81oJGl
+            -----END CERTIFICATE-----
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m completed              = true [90m-> null[0m[0m
+      [31m-[0m[0m context_name           = "kind-classboard" [90m-> null[0m[0m
+      [31m-[0m[0m endpoint               = "https://127.0.0.1:57321" [90m-> null[0m[0m
+      [31m-[0m[0m id                     = "classboard-" [90m-> null[0m[0m
+      [31m-[0m[0m kubeconfig             = <<-EOT
+            apiVersion: v1
+            clusters:
+            - cluster:
+                certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJZU50T3FCTnJ6QWt3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpFeE1qWXhNREE0TlRaYUZ3MHpOakV4TWpNeE1ERXpOVFphTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURBeitRTW5mRTN3aUdEUzVqZUc4UU1zbmpNTGFhVE8vZWZuUmhVV25Kd3RQd3paVEhQM1pZRHY5ZVEKSkVUYzZRakJON1p2eDNpcWZzeG00cmlBNklTL0pyUnpRT0NZS2lkVG5uYXZoTEg4RE1QdG5qV2pySFVYZ05LQQpPSlkxRm1uMjJ1cTVVUFNiQ3VvelVXKytVNlc5R1VaNXZxL3FqODdBejFlM3BIdTJtSjVmZUwrU3Yrd2J5WUd3CjJCZXcyeERCMnlLaEFNcHRwSjhrTUh3UnltVy9DNkVSdmc3bHoxWFJyYkh2aU0vQ2JzWVpKc01GcFhsS2tiVVAKT0VwOUhwNEEzSG0vMmpJK2VqRFdDYW5yeFIyUmZOd1NBM1BwajlJQ0V0N0tsNE40Q2tmK2Fsc0RLNUFlN2Q1Wgp0aFVzUDFvVzROMVAzalBCNG96R0JzVE9zT0Q1QWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJRTi9NVy9JbnFjTm1mTVREZDNGa2pVVUlNR2J6QVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3UwUWxLbU5tNgpQczJmeG96aFpxQkE5eXhOS1VMbFNKdUFJbkVsVTBSMmJNYUMvWVFGS1ovdWFlNjhlTkhQcSsyWTBBTFoycDUwCmRZQTJPVHgxd1l4WGoyTmxuREZqemx3MGlzZjdhSGRkMjFXMFN1Z1RtOURtaENlZGN3MnMxb0d0NVhyQVJSZWcKZCtiSkFHQkswZjZpU1NQTnl3NzV6VDJ3WkdlbjllMmswUGQyRm9SdjV5VlJ2TlNBSmFFNjMxa0pkTDlSb0lzSwpySW42blUyZkhFbTkyTTE4T043ZERVZVZNM3B1czhoQys4YkFyblVPZWhHOEdreVVlMHkwUno5bVkvT1hUVUJICkUyeWJGQmhQcURORzZ6SGNBUHI0aHRuUndubmdrMXZHNnlLY3BQa0JudVovbDdKWjZYVG9vMTVFcmZpZjRBWGIKSnJmVWR3ODFvSkdsCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+                server: https://127.0.0.1:57321
+              name: kind-classboard
+            contexts:
+            - context:
+                cluster: kind-classboard
+                user: kind-classboard
+              name: kind-classboard
+            current-context: kind-classboard
+            kind: Config
+            users:
+            - name: kind-classboard
+              user:
+                client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURLVENDQWhHZ0F3SUJBZ0lJRTk5cFBVWkJ4K2N3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpFeE1qWXhNREE0TlRaYUZ3MHlOekV4TWpZeE1ERXpOVFphTUR3eApIekFkQmdOVkJBb1RGbXQxWW1WaFpHMDZZMngxYzNSbGNpMWhaRzFwYm5NeEdUQVhCZ05WQkFNVEVHdDFZbVZ5CmJtVjBaWE10WVdSdGFXNHdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFERWEzYm0KNEk4MytaeFF2UUtlYmdaV0JYSnlwNEREM2EvbUlQc0dhV3BHTEN1NUVsdE1uTVRxYnhsVlkvR1g2T2lUbjFLZAprSlBDUFE0VkpJMnVQWVcycE9YUnBKU1VGZDM0bW0vbkptRFlGU2ZSbXJscHgxdWxXN1FqakJBNkxYUGJzZUZOCnM0VjFDYVJSOWpKZVNJK2JFUlJTK0dSRzhLcXJzVDY3RTZCRE9FanRGeGlBZ1laa05DTWUzNURvVUs3T2JjTWsKODUzMGdnZXI5cGdxSElZODJpekZFRGpmeC8xL3haTG9XRGRWL1IzVlpVeVl1RTY4anc3TENFQmlNc3dDV3VHaQpZWEpEaDdpQ1ZzQmMrL3U4WFlIN2RlV1JEVFJpOFA1RGNFNU1QeS81SGRtU0RRVkhIVXY2eXMwTEZvWklCUW00CjM5Sjh6VjBkK3h4Q3N1ZW5BZ01CQUFHalZqQlVNQTRHQTFVZER3RUIvd1FFQXdJRm9EQVRCZ05WSFNVRUREQUsKQmdnckJnRUZCUWNEQWpBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkEzOHhiOGllcHcyWjh4TQpOM2NXU05SUWd3WnZNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJvazgxVmRwSERMYk1VNnlJK0pKZzV0WGk1CnU1UWREd2xyRE1Ua3FKazBaOWl1M3k0aGFnWm5kcUtVdTUrcEVTR29WRHJENEZWLzNqSzFxVUtReUp1cHZnSEgKNmdFZFQwMVBybnQ0Tmd1MmlEeHFyVTBSRUgwVGVwUE44MldQT2lRMjk2V1p3YWg4RjFqYm5HVFlpNnF6SDY1VgpOM1FXM2lKRFFUYVRXbTRxQ2htZUVvczBmMGNzTEhXbVVkRzAyaElscURTWWJZM21JcGdyVTdaOFlOY2RvdlJKCjdlQ3RzNVFGY0szNWRhUFFmRXNYK3NjYmtrL281RXVhN1V5UVd0c05PenBoOGhaUWFlMFBLMExMT0pLWUFTRlcKMEZpVWh5VUFqSFN5cCtNVlEvaXJHTUhPbWFKaTlicUI2dzVmTm0xZjB2eXd3djBZcGVqejVyeHJ3alFmCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+                client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBeEd0MjV1Q1BOL21jVUwwQ25tNEdWZ1Z5Y3FlQXc5MnY1aUQ3Qm1scVJpd3J1UkpiClRKekU2bThaVldQeGwram9rNTlTblpDVHdqME9GU1NOcmoyRnRxVGwwYVNVbEJYZCtKcHY1eVpnMkJVbjBacTUKYWNkYnBWdTBJNHdRT2kxejI3SGhUYk9GZFFta1VmWXlYa2lQbXhFVVV2aGtSdkNxcTdFK3V4T2dRemhJN1JjWQpnSUdHWkRRakh0K1E2RkN1em0zREpQT2Q5SUlIcS9hWUtoeUdQTm9zeFJBNDM4ZjlmOFdTNkZnM1ZmMGQxV1ZNCm1MaE92SThPeXdoQVlqTE1BbHJob21GeVE0ZTRnbGJBWFB2N3ZGMkIrM1hsa1EwMFl2RCtRM0JPVEQ4ditSM1oKa2cwRlJ4MUwrc3JOQ3hhR1NBVUp1Ti9TZk0xZEhmc2NRckxucHdJREFRQUJBb0lCQUJjMW01Y3NjYi9yZnMwTAppSU92L0krdGxSaDNNbi95Y2haL1R5b3l5cHdBSENxQ1FNZU12cmYwNk1sdVJkM3RaNDRLQlhrWTNGelhXaEtsCmZ4aFhyTFVvUnYrK3NzL014YTNha2Q1K2FuTWVETlozc2ZFTjNZWnNqNXlqc0Vjdmw4RWVBOEZxdFJwZlNVdG0KREEyWUJXQU5aSmxwUUhBaGdBbEpxRi95c2IwL2RBc3pWeVRmdVpwSTZtd2I1U3FEU1FXeWFQdDlraDF4cjRrQwpuNnh6a2h5REZTV0xPNDFKSU1pNHRkR3hOMnpqWkppQVRYSkx5U3cwaUJhTUw5TGNZbTNKMGJ5YXVEaEhaMEZHCk91cHNsKzV3dUlxVmhwbjVjNjJXdUUvbVlPUDN4S05oU1cxTUV2RXp0RmxSVmo0WnVoZ1dnZlRyRE1nL04zdHEKVmltQ0JBRUNnWUVBeUlYSVFadDVpQkRNc3c3cTRQQWJ0Zm14YVV0M3lPRWQ1U0l1ZDZvb09MQ3JaY1dnL2hlRgoyNWRTcC84K0luTStiL0RQWE5ZUEVaUGl0MVNQck83UmJKSmpRWFdnYkcwODcrdU0xV0tyM0pOVU5wK3lKa2gwCjRVa0FFMzNJWGJ2dURSeXhCTWVvQmFoMitKMUY4cm1Lbk8vNUsyVFNCQlhHMVAweHpOdEVrdDhDZ1lFQStzTVkKejc5QUhDVEdmUjZPa0FXdCtxWlhYcTNsS3UwdTBETisyU0Fjakh5c0UrK04zdjhjcEgzU0xDZElVMXlScSttMgppSWl6OTVyL1BiVkZscWZlamFXRFJ4cGIxcW5mOUx0ZUpKdnFmWGtsb0NSS2xZUFZPb202eFlkSlBHTVNjRDZjCkF0cWIvN1d6NU9zVlE1ZmxCMjdGTUhhSWRmWi9Jc0IyTjNtc1REa0NnWUJXbGdZWjVsTzlJRnZ6dWE1TWdRSEcKTzFLVFFBWXlWSnEvRlZweFM2VmdqVkVGZWlnQmNCRForR2ExcWk2Zlc1b0xaalYwUmU1dHphanBOdmR2V2hSTwpTSXZaZVR4VGRYd0pzWEczdG9xMWpWeWcxYVpzaDM4SXhLZm13cnFoVndQODMzWEV0WjNsQzVDTDNBV1hRTzBNCnhVYVhxVXBTZjBERE9hMm1Zc3dpaXdLQmdRQ1djK0g2RzN5Q3BrbjFIaFZaTWg4dHFRbjR3NHNoRTBlb0lZMTEKQm9BNmhqN1VnMEZ5ejB2SElicXRSVEJ1MjdhSEYrV3R5NTkyNnlkRFJmU25yTGFwOCtsdEN0S1pYRGtENUR0YQo2YlZxYlBwM04rOE1BQm82VWhLZW0wb0Vra2lvMGRmWEdvVElpcU9Sc0w2RVhLbE1xVmhrZUdudHBPU28zQ0xSCnJBNEZlUUtCZ1FDYVVmVWhVNU1JYXpEV2RUeTV0U1V4RDhCWHkyOTFORlIzVElVRVlSSTJlc29rSDVSMnN0SG8KOFpreDJxREVlYUtMcFZXeTVMR2JTZzE4enlVYjVsVEM3SWFPVmRxZTE1WnNQMEYrZ2IyNk1XdnhMRmZKTkNRZwpzbkdaakVwVFJNcVE1RVY4aHJoWUlaekpkbVVQVUhxVk45UDhhWDkzY1pmcmhGMG0wSXN5aFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+        EOT [90m-> null[0m[0m
+      [31m-[0m[0m kubeconfig_path        = "/Users/kseniamaranda/lms-core/deploy/terraform/cluster/classboard-config" [90m-> null[0m[0m
+      [31m-[0m[0m name                   = "classboard" [90m-> null[0m[0m
+      [31m-[0m[0m wait_for_ready         = true [90m-> null[0m[0m
+
+      [31m-[0m[0m kind_config {
+          [31m-[0m[0m api_version               = "kind.x-k8s.io/v1alpha4" [90m-> null[0m[0m
+          [31m-[0m[0m containerd_config_patches = [] [90m-> null[0m[0m
+          [31m-[0m[0m feature_gates             = {} [90m-> null[0m[0m
+          [31m-[0m[0m kind                      = "Cluster" [90m-> null[0m[0m
+          [31m-[0m[0m runtime_config            = {} [90m-> null[0m[0m
+
+          [31m-[0m[0m node {
+              [31m-[0m[0m kubeadm_config_patches = [] [90m-> null[0m[0m
+              [31m-[0m[0m labels                 = {} [90m-> null[0m[0m
+              [31m-[0m[0m role                   = "control-plane" [90m-> null[0m[0m
+                [90m# (1 unchanged attribute hidden)[0m[0m
+
+              [31m-[0m[0m extra_port_mappings {
+                  [31m-[0m[0m container_port = 30080 [90m-> null[0m[0m
+                  [31m-[0m[0m host_port      = 30080 [90m-> null[0m[0m
+                  [31m-[0m[0m protocol       = "TCP" [90m-> null[0m[0m
+                    [90m# (1 unchanged attribute hidden)[0m[0m
+                }
+            }
+          [31m-[0m[0m node {
+              [31m-[0m[0m kubeadm_config_patches = [] [90m-> null[0m[0m
+              [31m-[0m[0m labels                 = {} [90m-> null[0m[0m
+              [31m-[0m[0m role                   = "worker" [90m-> null[0m[0m
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            }
+          [31m-[0m[0m node {
+              [31m-[0m[0m kubeadm_config_patches = [] [90m-> null[0m[0m
+              [31m-[0m[0m labels                 = {} [90m-> null[0m[0m
+              [31m-[0m[0m role                   = "worker" [90m-> null[0m[0m
+                [90m# (1 unchanged attribute hidden)[0m[0m
+            }
+        }
+    }
+
+[1mPlan:[0m [0m0 to add, 0 to change, 1 to destroy.
+
+Changes to Outputs:
+  [31m-[0m[0m app_url      = "http://127.0.0.1:30080" [90m-> null[0m[0m
+  [31m-[0m[0m cluster_name = "classboard" [90m-> null[0m[0m
+  [31m-[0m[0m kube_context = "kind-classboard" [90m-> null[0m[0m
+[0m[1mkind_cluster.this: Destroying... [id=classboard-][0m[0m
+[0m[1mkind_cluster.this: Still destroying... [id=classboard-, 00m10s elapsed][0m[0m
+[0m[1mkind_cluster.this: Destruction complete after 13s[0m
+[0m[1m[32m
+Destroy complete! Resources: 1 destroyed.[0m
+Cluster destroyed.
