@@ -117,12 +117,6 @@ def test_blank_title_is_rejected(board):
     assert "title" in body["error"]
 
 
-def test_pipeline_records_a_failure():
-    # Removed in the following commit. Exists so the Actions run goes red
-    # and the test report is still uploaded.
-    assert False
-
-
 def test_home_page_is_served(board):
     import urllib.request
 
