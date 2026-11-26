@@ -1,2 +1,17 @@
 *.env
 /reports
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+# kubeconfig the kind provider writes beside the cluster stack
+deploy/terraform/cluster/*-config
+crash.log
+.DS_Store
+classboard/test-results/
+docs/evidence/*.csv
