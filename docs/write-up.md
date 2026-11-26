@@ -19,7 +19,7 @@ I pushed a commit whose only change was `assert False`, then the commit that rem
 - Red run, test job failed, image job skipped, and the `test-report` artifact was still uploaded: https://github.com/uskkyoko/lms-core/actions/runs/45803469083
 - Green run that removed the failure. Lint, test, and image all succeeded: https://github.com/uskkyoko/lms-core/actions/runs/45803513196
 
-Those runs are on the branch. The entry requirement is a green run on `main`, which happens when the branch is merged. Merging into this repository also changes the LMS the other two people are using, so the pull request needs a real review comment from one of them before that merge. The image build already succeeds on the branch; the push to GHCR is the part that waits for `main`.
+The pull request is https://github.com/uskkyoko/lms-core/pull/7. Those runs are on the branch. The entry requirement is a green run on `main`, which happens when the branch is merged. Merging into this repository also changes the LMS the other two people are using, so the pull request needs a real review comment from one of them before that merge. The image build already succeeds on the branch; the push to GHCR is the part that waits for `main`.
 
 No deployed password is in the repository. `TF_VAR_db_password` is an environment variable. The Secret is created by Terraform from it.
 
