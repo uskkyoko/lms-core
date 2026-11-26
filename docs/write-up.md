@@ -10,12 +10,16 @@ The announcement idea comes from Team 1's LMS in this repository (`backend/` and
 
 ## Source control
 
-Work is on a branch, in small commits. The remote of this clone is the shared Team 1 repository, `uskkyoko/lms-core`. Merging to `main` there affects the other two people on the LMS, so that merge is a decision for the team, not something this write-up pretends has already happened.
+Work is on branch `ksenia/classboard`, in small commits. The remote is the shared Team 1 repository, `uskkyoko/lms-core`.
 
-Two things are still required before this project can pass, and both happen on GitHub, not on the laptop:
+The workflow is `.github/workflows/ci.yml`. It lints, then tests, and only then builds the image. The test job uploads `test-results/junit.xml` with `if: always()`. A push to `main` publishes `ghcr.io/uskkyoko/lms-core/classboard`. The database password in that workflow is for the throwaway Postgres service container. It is not the password of the cluster.
 
-- A pull request into the submission repository, with a real review comment, then a merge.
-- A red Actions run, and the green run on `main` that fixed it. The workflow is `.github/workflows/ci.yml`. It lints, then tests, and only then builds the image. The test job uploads `test-results/junit.xml` with `if: always()`. A push to `main` publishes `ghcr.io/<owner>/lms-core/classboard`. The database password in that workflow is for the throwaway Postgres service container. It is not the password of the cluster.
+I pushed a commit whose only change was `assert False`, then the commit that removed it.
+
+- Red run, test job failed, image job skipped, and the `test-report` artifact was still uploaded: https://github.com/uskkyoko/lms-core/actions/runs/45803469083
+- Green run that removed the failure. Lint, test, and image all succeeded: https://github.com/uskkyoko/lms-core/actions/runs/45803513196
+
+Those runs are on the branch. The entry requirement is a green run on `main`, which happens when the branch is merged. Merging into this repository also changes the LMS the other two people are using, so the pull request needs a real review comment from one of them before that merge. The image build already succeeds on the branch; the push to GHCR is the part that waits for `main`.
 
 No deployed password is in the repository. `TF_VAR_db_password` is an environment variable. The Secret is created by Terraform from it.
 
